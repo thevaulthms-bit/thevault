@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Vault Admin Dashboard</title>
+
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: "Inter", Arial, sans-serif;
+      background: #0b0b0b;
+      color: white;
+      padding: 30px;
+      margin: 0;
+    }
+    h1 { margin-top: 0; }
+    input, button, select, textarea {
+      padding: 10px;
+      margin: 6px 0;
+      border-radius: 8px;
+      border: none;
+      width: 100%;
+      background: #121929;
+      color: white;
+    }
+    input[type="checkbox"] {
+      width: auto;
+      margin: 0;
+    }
+    label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 6px 0;
+    }
+    button {
+      background: #4b6fc9;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    button.secondary { background: #26365b; }
+    button.danger { background: #b73737; }
+    .card {
+      background: #151515;
+      padding: 20px;
+      border-radius: 12px;
+      border: 1px solid #1f2a44;
+    }
+    .hidden { display:none; }
+    .grid {
+      display: grid;
+      gap: 20px;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    }
+    .status { color: #9bd7ff; font-size: 13px; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    th, td {
+      padding: 8px;
+      text-align: left;
+      border-bottom: 1px solid #222;
+    }
+    .pill {
+      background: #1a243f;
+      border: 1px solid #2d3d66;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+
+<h1>🛠 Vault Admin Panel</h1>
+
+<div id="loginCard" class="card" style="max-width:420px;">
+  <h3>Admin Login</h3>
+  <input id="email" placeholder="Admin Email"><br>
+  <input id="password" type="password" placeholder="Password"><br>
+  <input id="securityCode" type="password" placeholder="Security Code"><br>
+  <button onclick="login()">Login</button>
+  <p id="loginMsg" class="status"></p>
+</div>
+
+<div id="adminPanel" class="hidden">
+  <div class="grid">
+    <div class="card">
+      <h3>Give Rewards</h3>
+      <input id="targetEmail" placeholder="User Email"><br>
+      <input id="keysAmount" type="number" placeholder="Keys to Add"><br>
+      <input id="xpAmount" type="number" placeholder="XP to Add"><br>
+      <button onclick="grantRewards()">Grant</button>
+      <button class="danger" onclick="resetAllUsersKeys()">Reset All Users Keys to 0</button>
+      <button class="secondary" onclick="logout()">Logout</button>
+      <p id="statusMsg" class="status"></p>
+    </div>
+
+    <div class="card">
+      <h3>Create New Bet</h3>
+      <input id="betTitle" placeholder="Bet title">
+      <input id="betSideA" placeholder="Side A label">
+      <input id="betSideB" placeholder="Side B label">
+      <button onclick="createBet()">Create Bet</button>
+      <p id="betCreateMsg" class="status"></p>
+    </div>
+
+    <div class="card">
+      <h3>Edit User Field</h3>
+      <input id="editUserId" placeholder="User Email or UID">
+      <input id="editFieldPath" placeholder="Field path (e.g. keys, profile.rank)">
+      <select id="editValueType">
+        <option value="text">Text</option>
+        <option value="number">Number</option>
+        <option value="boolean">Boolean</option>
+        <option value="json">JSON</option>
+      </select>
+      <textarea id="editFieldValue" rows="3" placeholder="Value"></textarea>
+      <button onclick="updateUserField()">Update Field</button>
+      <p id="editFieldMsg" class="status"></p>
+    </div>
+  </div>
+
+  <div class="grid" style="margin-top:24px;">
+    <div class="card">
+      <h3>Live Bets</h3>
+      <div id="betsAdminList"></div>
+    </div>
+
+    <div class="card">
+      <h3>Lottery Controls</h3>
+      <p class="status">End the current lottery cycle and reset the pool.</p>
+      <button class="danger" onclick="endLottery()">End Lottery Now</button>
+      <p id="lotteryAdminMsg" class="status"></p>
+    </div>
+
+    <div class="card">
+      <h3>Homework Forum Moderation</h3>
+      <p class="status">Approve or reject posts. Approving grants the uploader +3 keys.</p>
+      <div id="moderationList"></div>
+    </div>
+
+    <div class="card">
+      <h3>Member Directory</h3>
+      <p class="status">Suspected hacking: use Ban/Unban to flag accounts and trigger device lock enforcement on login.</p>
+      <div class="pill" id="memberCount">Loading...</div>
+      <div style="overflow-x:auto; margin-top:12px;">
+        <table>
+          <thead>
+            <tr>
+              <th>Username</th>
+              <th>Email</th>
+              <th>Keys</th>
+              <th>XP</th>
+              <th>Rank</th>
+              <th>Security</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="memberTable"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyA5kS0tUROuAINTQH387kwxWBqwjn-mbJA",
+  authDomain: "the-vault-b5294.firebaseapp.com",
+  projectId: "the-vault-b5294",
+  storageBucket: "the-vault-b5294.firebasestorage.app",
+  messagingSenderId: "173280236722",
+  appId: "1:173280236722:web:a5a6319b447e9569e525ab",
+  measurementId: "G-5M3C7NRW87"
+};
+
+firebase.initializeApp(firebaseConfig);
+
+const auth = firebase.auth();
+const db = firebase.firestore();
+const storage = firebase.storage();
+
+function login() {
+  const secret = securityCode.value.trim();
+
+  if (secret !== "DevinSixSeven") {
+    loginMsg.textContent = "Invalid security code.";
+    return;
+  }
+
+  auth.signInWithEmailAndPassword(email.value, password.value)
+    .catch(e => loginMsg.textContent = e.message);
+}
+
+function logout() { auth.signOut(); }
+
+auth.onAuthStateChanged(user => {
+  if (!user) {
+    loginCard.classList.remove("hidden");
+    adminPanel.classList.add("hidden");
+    return;
+  }
+
+  if (user.uid !== "7Pn5I31V0OcK2Tr7f1zWlCkbLlM2") {
+    loginMsg.textContent = "Not an admin account.";
+    auth.signOut();
+    return;
+  }
+
+  loginCard.classList.add("hidden");
+  adminPanel.classList.remove("hidden");
+  loadMembers();
+  loadBets();
+  loadHomeworkModeration();
+});
+
+async function grantRewards() {
+  const email = targetEmail.value.trim();
+  const keys = parseInt(keysAmount.value) || 0;
+  const xp = parseInt(xpAmount.value) || 0;
+
+  if (!email) {
+    statusMsg.textContent = "Enter user email";
+    return;
+  }
+
+  const userQuery = await db.collection("users")
+    .where("email", "==", email)
+    .get();
+
+  if (userQuery.empty) {
+    statusMsg.textContent = "User not found in database";
+    return;
+  }
+
+  const docRef = userQuery.docs[0].ref;
+
+  await docRef.update({
+    keys: firebase.firestore.FieldValue.increment(keys),
+    xp: firebase.firestore.FieldValue.increment(xp)
+  });
+
+  statusMsg.textContent = "Rewards granted! ✅";
+}
+
+
+async function resetAllUsersKeys() {
+  if (!confirm("Reset keys to 0 for ALL users? This cannot be undone.")) {
+    return;
+  }
+
+  statusMsg.textContent = "Resetting keys for all users...";
+  const usersSnap = await db.collection("users").get();
+
+  if (usersSnap.empty) {
+    statusMsg.textContent = "No users found to reset.";
+    return;
+  }
+
+  let batch = db.batch();
+  let ops = 0;
+  let updatedUsers = 0;
+
+  for (const userDoc of usersSnap.docs) {
+    batch.update(userDoc.ref, { keys: 0 });
+    ops += 1;
+    updatedUsers += 1;
+
+    if (ops === 450) {
+      await batch.commit();
+      batch = db.batch();
+      ops = 0;
+    }
+  }
+
+  if (ops > 0) {
+    await batch.commit();
+  }
+
+  statusMsg.textContent = `Reset keys to 0 for ${updatedUsers} users ✅`;
+}
+
+async function findUserDoc(identifier) {
+  if (identifier.includes("@")) {
+    const userQuery = await db.collection("users")
+      .where("email", "==", identifier)
+      .limit(1)
+      .get();
+    if (userQuery.empty) return null;
+    return userQuery.docs[0].ref;
+  }
+  const userRef = db.collection("users").doc(identifier);
+  const snapshot = await userRef.get();
+  return snapshot.exists ? userRef : null;
+}
+
+async function updateUserField() {
+  const identifier = editUserId.value.trim();
+  const fieldPath = editFieldPath.value.trim();
+  const valueRaw = editFieldValue.value.trim();
+  const valueType = editValueType.value;
+  editFieldMsg.textContent = "";
+
+  if (!identifier || !fieldPath) {
+    editFieldMsg.textContent = "Enter a user and field path.";
+    return;
+  }
+
+  const userRef = await findUserDoc(identifier);
+  if (!userRef) {
+    editFieldMsg.textContent = "User not found.";
+    return;
+  }
+
+  let value;
+  try {
+    if (valueType === "number") {
+      value = Number(valueRaw);
+      if (Number.isNaN(value)) throw new Error("Invalid number.");
+    } else if (valueType === "boolean") {
+      value = valueRaw.toLowerCase() === "true";
+    } else if (valueType === "json") {
+      value = valueRaw ? JSON.parse(valueRaw) : null;
+    } else {
+      value = valueRaw;
+    }
+  } catch (error) {
+    editFieldMsg.textContent = error.message;
+    return;
+  }
+
+  await userRef.update({ [fieldPath]: value });
+  editFieldMsg.textContent = "Field updated ✅";
+  editFieldValue.value = "";
+}
+
+async function loadMembers() {
+  db.collection("users").orderBy("email").onSnapshot(snapshot => {
+    const table = document.getElementById("memberTable");
+    table.innerHTML = "";
+    document.getElementById("memberCount").textContent = `${snapshot.size} members`;
+
+    snapshot.forEach(doc => {
+      const data = doc.data() || {};
+      const row = document.createElement("tr");
+      row.innerHTML = `
+        <td>${data.username || "-"}</td>
+        <td>${data.email || "-"}</td>
+        <td>${data.keys || 0}</td>
+        <td>${data.xp || 0}</td>
+        <td>${data.rank || 0}</td>
+        <td>${data.banned ? "🚫 Banned" : "✅ Clear"}</td>
+        <td>
+          <button onclick="resetUserKeys('${doc.id}')">Reset Keys</button>
+          <button class="secondary" onclick="setUserBanStatus('${doc.id}', ${!data.banned})">${data.banned ? "Unban" : "Ban"}</button>
+          <button class="danger" onclick="deleteMember('${doc.id}')">Delete</button>
+        </td>
+      `;
+      table.appendChild(row);
+    });
+  });
+}
+
+async function setUserBanStatus(uid, shouldBan) {
+  const action = shouldBan ? "ban" : "unban";
+  if (!confirm(`Are you sure you want to ${action} this user?`)) {
+    return;
+  }
+
+  await db.collection("users").doc(uid).update({
+    banned: shouldBan,
+    banUpdatedAt: firebase.firestore.FieldValue.serverTimestamp()
+  });
+}
+
+async function resetUserKeys(uid) {
+  if (!confirm("Reset this user's keys to 0?")) {
+    return;
+  }
+
+  await db.collection("users").doc(uid).update({ keys: 0 });
+}
+
+async function deleteMember(uid) {
+  if (!confirm("Delete this user data?")) {
+    return;
+  }
+  await db.collection("users").doc(uid).delete();
+}
+
+async function createBet() {
+  const title = betTitle.value.trim();
+  const sideA = betSideA.value.trim();
+  const sideB = betSideB.value.trim();
+
+  if (!title || !sideA || !sideB) {
+    betCreateMsg.textContent = "Fill in all bet fields.";
+    return;
+  }
+
+  await db.collection("bets").add({
+    title,
+    sideA,
+    sideB,
+    status: "open",
+    totalA: 0,
+    totalB: 0,
+    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+  });
+
+  betCreateMsg.textContent = "Bet created ✅";
+  betTitle.value = "";
+  betSideA.value = "";
+  betSideB.value = "";
+}
+
+function loadBets() {
+  db.collection("bets").orderBy("createdAt", "desc").onSnapshot(snapshot => {
+    const container = document.getElementById("betsAdminList");
+    container.innerHTML = "";
+
+    snapshot.forEach(doc => {
+      const bet = doc.data();
+      const wrap = document.createElement("div");
+      wrap.className = "card";
+      wrap.style.marginBottom = "12px";
+      wrap.innerHTML = `
+        <strong>${bet.title || "Untitled"}</strong>
+        <div class="status">${bet.sideA || "Side A"} vs ${bet.sideB || "Side B"}</div>
+        <div class="status">${bet.totalA || 0} keys | ${bet.totalB || 0} keys</div>
+        <div class="status">Status: ${bet.status || "open"}</div>
+        <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:8px;">
+          <button onclick="resolveBet('${doc.id}', 'A')">Declare ${bet.sideA || "Side A"} Wins</button>
+          <button onclick="resolveBet('${doc.id}', 'B')">Declare ${bet.sideB || "Side B"} Wins</button>
+          <button onclick="closeBet('${doc.id}')">End Bet</button>
+          <button class="danger" onclick="deleteBet('${doc.id}')">Delete Bet</button>
+        </div>
+      `;
+      container.appendChild(wrap);
+    });
+  });
+}
+
+async function resolveBet(betId, winner) {
+  const betRef = db.collection("bets").doc(betId);
+  const betSnap = await betRef.get();
+  if (!betSnap.exists) return;
+  const betData = betSnap.data();
+  if (betData.status === "resolved") {
+    alert("Bet already resolved.");
+    return;
+  }
+
+  const entriesSnap = await db.collection("betEntries").where("betId", "==", betId).get();
+  const winnerEntries = entriesSnap.docs.filter(doc => doc.data().side === winner);
+
+  const batch = db.batch();
+  batch.update(betRef, {
+    status: "resolved",
+    winner,
+    resolvedAt: firebase.firestore.FieldValue.serverTimestamp()
+  });
+
+  winnerEntries.forEach(entry => {
+    const data = entry.data();
+    const userRef = db.collection("users").doc(data.userId);
+    batch.update(userRef, {
+      keys: firebase.firestore.FieldValue.increment(data.amount * 2)
+    });
+  });
+
+  await batch.commit();
+  alert("Bet resolved and payouts sent.");
+}
+
+async function closeBet(betId) {
+  if (!confirm("End this bet without picking a winner?")) return;
+  await db.collection("bets").doc(betId).update({
+    status: "closed",
+    closedAt: firebase.firestore.FieldValue.serverTimestamp()
+  });
+  alert("Bet closed.");
+}
+
+async function deleteBet(betId) {
+  if (!confirm("Delete this bet and all entries?")) return;
+  const entriesSnap = await db.collection("betEntries").where("betId", "==", betId).get();
+  const batch = db.batch();
+  entriesSnap.forEach(doc => batch.delete(doc.ref));
+  batch.delete(db.collection("bets").doc(betId));
+  await batch.commit();
+}
+
+
+function getCdtDateString(date = new Date()) {
+  const formatter = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/Chicago",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit"
+  });
+  const parts = formatter.formatToParts(date);
+  const year = parts.find(part => part.type === "year").value;
+  const month = parts.find(part => part.type === "month").value;
+  const day = parts.find(part => part.type === "day").value;
+  return `${year}-${month}-${day}`;
+}
+
+async function endLottery() {
+  if (!confirm("End the current lottery and reset the pool?")) return;
+  lotteryAdminMsg.textContent = "";
+  const lotteryRef = db.collection("lottery").doc("current");
+  await lotteryRef.set({
+    pool: 0,
+    entries: 0,
+    status: "open",
+    lastEndedDate: getCdtDateString(),
+    closedAt: firebase.firestore.FieldValue.serverTimestamp(),
+    closedReason: "manual"
+  }, { merge: true });
+  lotteryAdminMsg.textContent = "Lottery ended and reset ✅";
+}
+
+
+function safeText(value) {
+  return String(value || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+
+</script>
+
+</body>
+</html>
