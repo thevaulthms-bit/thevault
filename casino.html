@@ -1,0 +1,1087 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>The Vault Casino</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap">
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Inter", Arial, sans-serif;
+      background: radial-gradient(circle at top, #1a2d5c, #0a0a0a 65%);
+      color: #f5f5f5;
+      min-height: 100vh;
+    }
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 30px;
+      background: rgba(10, 10, 10, 0.85);
+      border-bottom: 1px solid #1f2a44;
+      position: sticky;
+      top: 0;
+      z-index: 5;
+    }
+    header h1 { margin: 0; font-size: 22px; }
+    .nav-links {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      font-size: 14px;
+    }
+    .nav-links a {
+      color: #9bd7ff;
+      text-decoration: none;
+      padding: 6px 10px;
+      border-radius: 6px;
+      background: rgba(75, 111, 201, 0.15);
+    }
+    .stat-pill {
+      background: #111a2f;
+      border: 1px solid #283a63;
+      padding: 6px 12px;
+      border-radius: 999px;
+      font-size: 13px;
+    }
+    main {
+      padding: 30px;
+      display: grid;
+      gap: 24px;
+    }
+    .panel {
+      background: rgba(20, 20, 20, 0.92);
+      border-radius: 16px;
+      border: 1px solid #1c2a4d;
+      padding: 20px;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45);
+    }
+    .panel h2 { margin-top: 0; }
+    .grid {
+      display: grid;
+      gap: 18px;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    }
+    input, select, button {
+      width: 100%;
+      padding: 10px;
+      border-radius: 8px;
+      border: none;
+      margin-top: 8px;
+      background: #131a2b;
+      color: #f5f5f5;
+    }
+    button {
+      background: #4b6fc9;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    button.secondary {
+      background: #2d3d66;
+    }
+    .status {
+      font-size: 13px;
+      color: #9bd7ff;
+      margin-top: 6px;
+    }
+    .bet-card {
+      border: 1px solid #24335b;
+      border-radius: 12px;
+      padding: 14px;
+      background: rgba(10, 14, 26, 0.7);
+    }
+    .bet-meta {
+      display: flex;
+      justify-content: space-between;
+      font-size: 13px;
+      color: #9fd0ff;
+    }
+    .blackjack-table {
+      border: 1px solid #22345f;
+      border-radius: 12px;
+      padding: 16px;
+      background: #0f1526;
+    }
+    .hand {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin: 8px 0 12px;
+    }
+    .card {
+      width: 52px;
+      height: 74px;
+      background: #fefefe;
+      color: #111;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+    }
+    .muted { color: #9aa4c1; font-size: 13px; }
+    .notice {
+      background: #12203f;
+      border: 1px solid #223c6c;
+      padding: 12px;
+      border-radius: 10px;
+      font-size: 13px;
+    }
+
+    .roulette-wheel {
+      width: 180px;
+      height: 180px;
+      border-radius: 50%;
+      margin: 8px auto;
+      border: 6px solid #22345f;
+      background: conic-gradient(#d63031 0deg 170deg, #111 170deg 340deg, #1abc9c 340deg 360deg);
+      box-shadow: inset 0 0 24px rgba(0,0,0,0.45);
+      position: relative;
+      transition: transform 1s ease-out;
+    }
+    .roulette-wheel::after {
+      content: "";
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 16px;
+      height: 16px;
+      background: #f5f5f5;
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+    }
+    .roulette-pointer {
+      width: 0;
+      height: 0;
+      border-left: 10px solid transparent;
+      border-right: 10px solid transparent;
+      border-top: 16px solid #f5f5f5;
+      margin: 0 auto -8px;
+    }
+    .slot-reels {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin: 8px 0;
+    }
+    .slot-reel {
+      background: #0f1526;
+      border: 1px solid #24335b;
+      border-radius: 10px;
+      min-height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 30px;
+    }
+    #plinkoCanvas {
+      width: 100%;
+      max-width: 420px;
+      background: #0f1526;
+      border: 1px solid #24335b;
+      border-radius: 10px;
+      display: block;
+      margin: 8px auto;
+    }
+  </style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>🎰 The Vault Casino</h1>
+    <div class="muted">Secure key-based games, real-time pools, and live bets.</div>
+  </div>
+  <div class="nav-links">
+    <a href="index.html">← Back to Vault</a>
+    <div class="stat-pill" id="userStats">Loading...</div>
+  </div>
+</header>
+
+<main>
+  <div class="notice" id="loginNotice">Sign in to use casino services.</div>
+
+  <section class="panel">
+    <h2>Lottery Drop</h2>
+    <div class="grid">
+      <div>
+        <p class="muted">Pool grows with every key placed. The next draw is handled by admins.</p>
+        <div class="stat-pill" id="lotteryPool">Pool: 0 keys</div>
+        <div class="stat-pill" id="lotteryEntries" style="margin-top:8px;">Entries: 0</div>
+      </div>
+      <div>
+        <label for="lotteryAmount">Keys to enter</label>
+        <input id="lotteryAmount" type="number" min="1" placeholder="e.g. 5">
+        <button onclick="enterLottery()">Enter Lottery</button>
+        <div class="status" id="lotteryStatus"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>Blackjack for Keys</h2>
+    <div class="blackjack-table">
+      <label for="blackjackBet">Bet amount</label>
+      <input id="blackjackBet" type="number" min="1" placeholder="e.g. 10">
+      <div style="display:flex; gap:10px; flex-wrap:wrap;">
+        <button onclick="startBlackjack()">Deal</button>
+        <button class="secondary" onclick="hit()">Hit</button>
+        <button class="secondary" onclick="stand()">Stand</button>
+        <button class="secondary" onclick="resetBlackjack()">Reset</button>
+      </div>
+      <div class="muted" id="blackjackStatus" style="margin-top:10px;">Place a bet to start.</div>
+      <div>
+        <h4>Your Hand</h4>
+        <div class="hand" id="playerHand"></div>
+        <div class="muted">Total: <span id="playerTotal">0</span></div>
+      </div>
+      <div>
+        <h4>Dealer</h4>
+        <div class="hand" id="dealerHand"></div>
+        <div class="muted">Total: <span id="dealerTotal">0</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>Roulette</h2>
+    <div class="grid">
+      <div>
+        <p class="muted">Pick a color and bet keys. Red/Black pay 2x total, Green pays 14x total.</p>
+        <div class="roulette-pointer"></div>
+        <div class="roulette-wheel" id="rouletteWheel"></div>
+        <div class="stat-pill" id="rouletteLastSpin">Last spin: -</div>
+        <div class="status" id="rouletteStatus"></div>
+      </div>
+      <div>
+        <label for="rouletteColor">Color</label>
+        <select id="rouletteColor">
+          <option value="red">Red</option>
+          <option value="black">Black</option>
+          <option value="green">Green</option>
+        </select>
+        <label for="rouletteAmount">Keys to bet</label>
+        <input id="rouletteAmount" type="number" min="1" placeholder="e.g. 5">
+        <button onclick="placeRouletteBet()">Spin Roulette</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>Slot Machine</h2>
+    <div class="grid">
+      <div>
+        <p class="muted">Spin 3 reels. Match symbols for key payouts.</p>
+        <div class="slot-reels">
+          <div class="slot-reel" id="slotReel0">❔</div>
+          <div class="slot-reel" id="slotReel1">❔</div>
+          <div class="slot-reel" id="slotReel2">❔</div>
+        </div>
+        <div class="stat-pill" id="slotLastSpin">Last spin: -</div>
+        <div class="status" id="slotStatus"></div>
+      </div>
+      <div>
+        <label for="slotAmount">Keys to spin</label>
+        <input id="slotAmount" type="number" min="1" placeholder="e.g. 5">
+        <button onclick="spinSlots()">Spin Slots</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>Plinko</h2>
+    <div class="grid">
+      <div>
+        <p class="muted">12-row plinko with key-based payouts and visual drop path.</p>
+        <canvas id="plinkoCanvas" width="420" height="300"></canvas>
+        <div class="stat-pill" id="plinkoLastDrop">Last drop: -</div>
+        <div class="status" id="plinkoStatus"></div>
+      </div>
+      <div>
+        <label for="plinkoAmount">Bet amount (keys)</label>
+        <input id="plinkoAmount" type="number" min="1" placeholder="e.g. 3">
+        <div class="muted" style="margin-top:10px;">Rows are fixed to 12 for fairness.</div>
+        <button onclick="dropPlinkoBall()">Drop Ball</button>
+      </div>
+    </div>
+  </section>
+
+
+  <section class="panel">
+    <h2>Live Betting Board</h2>
+    <div class="grid">
+      <div>
+        <p class="muted">Choose an active matchup and place keys on a side.</p>
+        <div id="betsList" class="grid"></div>
+      </div>
+      <div>
+        <label for="betSelect">Select Bet</label>
+        <select id="betSelect"></select>
+        <label for="betSide">Side</label>
+        <select id="betSide">
+          <option value="A">Side A</option>
+          <option value="B">Side B</option>
+        </select>
+        <label for="betAmount">Keys to wager</label>
+        <input id="betAmount" type="number" min="1" placeholder="e.g. 15">
+        <button onclick="placeBet()">Place Bet</button>
+        <div class="status" id="betStatus"></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyA5kS0tUROuAINTQH387kwxWBqwjn-mbJA",
+  authDomain: "the-vault-b5294.firebaseapp.com",
+  projectId: "the-vault-b5294",
+  storageBucket: "the-vault-b5294.firebasestorage.app",
+  messagingSenderId: "173280236722",
+  appId: "1:173280236722:web:a5a6319b447e9569e525ab",
+  measurementId: "G-5M3C7NRW87"
+};
+
+firebase.initializeApp(firebaseConfig);
+
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+let currentUser = null;
+let userDocRef = null;
+let currentKeys = 0;
+let lotteryResolveInProgress = false;
+
+let deck = [];
+let playerHand = [];
+let dealerHand = [];
+let activeBet = 0;
+let blackjackInPlay = false;
+let activeBlackjackRef = null;
+
+function updateStats() {
+  const statsEl = document.getElementById("userStats");
+  if (!currentUser) {
+    statsEl.textContent = "Guest";
+    return;
+  }
+  statsEl.textContent = `${currentUser.email} • Keys ${currentKeys}`;
+}
+
+function buildDeck() {
+  const suits = ["♠", "♥", "♣", "♦"];
+  const ranks = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"];
+  deck = [];
+  for (const suit of suits) {
+    for (const rank of ranks) {
+      deck.push({ rank, suit });
+    }
+  }
+  deck.sort(() => Math.random() - 0.5);
+}
+
+function drawCard() {
+  return deck.pop();
+}
+
+function handValue(hand) {
+  let total = 0;
+  let aces = 0;
+  hand.forEach(card => {
+    if (["J", "Q", "K"].includes(card.rank)) {
+      total += 10;
+    } else if (card.rank === "A") {
+      total += 11;
+      aces += 1;
+    } else {
+      total += parseInt(card.rank, 10);
+    }
+  });
+  while (total > 21 && aces > 0) {
+    total -= 10;
+    aces -= 1;
+  }
+  return total;
+}
+
+function renderHand(elId, hand) {
+  const el = document.getElementById(elId);
+  el.innerHTML = "";
+  hand.forEach(card => {
+    const div = document.createElement("div");
+    div.className = "card";
+    div.textContent = `${card.rank}${card.suit}`;
+    el.appendChild(div);
+  });
+}
+
+function setBlackjackStatus(message) {
+  document.getElementById("blackjackStatus").textContent = message;
+}
+
+
+function spinRouletteColor() {
+  const roll = Math.random();
+  if (roll < 0.48) return "red";
+  if (roll < 0.96) return "black";
+  return "green";
+}
+
+function formatRouletteColor(color) {
+  if (color === "red") return "🔴 Red";
+  if (color === "black") return "⚫ Black";
+  return "🟢 Green";
+}
+
+const SLOT_SYMBOLS = ["🍒", "🍋", "🔔", "⭐", "7️⃣"];
+
+function pickSlotSymbol() {
+  const roll = Math.random();
+  if (roll < 0.30) return "🍒";
+  if (roll < 0.55) return "🍋";
+  if (roll < 0.75) return "🔔";
+  if (roll < 0.93) return "⭐";
+  return "7️⃣";
+}
+
+function getSlotMultiplier(reels) {
+  const [a, b, c] = reels;
+  if (a === c && b === c) {
+    if (c === "7️⃣") return 10;
+    if (c === "⭐") return 6;
+    if (c === "🔔") return 4;
+    if (c === "🍋") return 3;
+    return 2;
+  }
+  if (a === b || b === c || a === c) {
+    return 1.4;
+  }
+  return 0;
+}
+
+  const PLINKO_ROWS = 12;
+  const PLINKO_MULTIPLIERS = [5, 4, 4, 2, 0, 1, 1, 1, 0, 2, 4, 4, 5];
+
+
+
+
+function computePlinkoMultiplier(slotIndex) {
+  const index = Math.max(0, Math.min(PLINKO_MULTIPLIERS.length - 1, slotIndex));
+  return PLINKO_MULTIPLIERS[index];
+}
+
+function runPlinkoPath(rows = PLINKO_ROWS) {
+  let rights = 0;
+  for (let i = 0; i < rows; i += 1) {
+    if (Math.random() >= 0.5) rights += 1;
+  }
+  return rights;
+}
+
+
+function updateSlotVisual(reels) {
+  reels.forEach((symbol, idx) => {
+    const reelEl = document.getElementById(`slotReel${idx}`);
+    if (reelEl) reelEl.textContent = symbol;
+  });
+}
+
+function animateRoulette(result) {
+  const wheel = document.getElementById("rouletteWheel");
+  if (!wheel) return;
+  const target = result === "black" ? 90 : result === "red" ? 250 : 350;
+  const spins = 1440 + target;
+  wheel.style.transform = `rotate(${spins}deg)`;
+}
+
+function drawPlinkoBoard(slotIndex = null) {
+  const canvas = document.getElementById("plinkoCanvas");
+  if (!canvas) return;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  ctx.fillStyle = "#0f1526";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  for (let row = 0; row < PLINKO_ROWS; row += 1) {
+    const pegs = row + 1;
+    const spacing = canvas.width / (pegs + 1);
+    const y = 24 + row * 18;
+    for (let i = 0; i < pegs; i += 1) {
+      const x = spacing * (i + 1);
+      ctx.beginPath();
+      ctx.arc(x, y, 3, 0, Math.PI * 2);
+      ctx.fillStyle = "#7f8db1";
+      ctx.fill();
+    }
+  }
+
+  const slots = PLINKO_ROWS + 1;
+  const slotW = canvas.width / slots;
+  for (let i = 0; i < slots; i += 1) {
+    ctx.strokeStyle = "#22345f";
+    ctx.strokeRect(i * slotW, canvas.height - 36, slotW, 36);
+    ctx.fillStyle = "#9bd7ff";
+    ctx.font = "10px Inter";
+    ctx.fillText(`${PLINKO_MULTIPLIERS[i]}x`, i * slotW + 5, canvas.height - 14);
+  }
+
+  if (slotIndex !== null) {
+    const x = slotW * slotIndex + slotW / 2;
+    const y = canvas.height - 48;
+    ctx.beginPath();
+    ctx.arc(x, y, 8, 0, Math.PI * 2);
+    ctx.fillStyle = "#2ecc71";
+    ctx.fill();
+  }
+}
+
+async function settleKeyGame({ amount, payout, gameType, details }) {
+  const userRef = db.collection("users").doc(currentUser.uid);
+  await db.runTransaction(async (transaction) => {
+    const userSnap = await transaction.get(userRef);
+    const userData = userSnap.data() || {};
+    const keys = userData.keys || 0;
+    if (keys < amount) {
+      throw new Error("Not enough keys.");
+    }
+    const delta = -amount + payout;
+    transaction.update(userRef, {
+      keys: keys + delta
+    });
+  });
+
+  const logCollection = gameType === "roulette"
+    ? "rouletteSpins"
+    : gameType === "slots"
+      ? "slotSpins"
+      : "plinkoDrops";
+
+  await db.collection(logCollection).add({
+    userId: currentUser.uid,
+    email: currentUser.email,
+    amount,
+    payout,
+    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+    ...details
+  });
+}
+
+async function placeRouletteBet() {
+  const statusEl = document.getElementById("rouletteStatus");
+  const lastSpinEl = document.getElementById("rouletteLastSpin");
+
+  if (!currentUser) {
+    statusEl.textContent = "Sign in first.";
+    return;
+  }
+
+  const color = document.getElementById("rouletteColor").value;
+  const amount = parseInt(document.getElementById("rouletteAmount").value, 10);
+
+  if (!amount || amount <= 0) {
+    statusEl.textContent = "Enter a valid bet amount.";
+    return;
+  }
+
+  const result = spinRouletteColor();
+  animateRoulette(result);
+  const won = result === color;
+  const multiplier = result === "green" ? 14 : 2;
+  const payout = won ? amount * multiplier : 0;
+
+  try {
+    await settleKeyGame({
+      amount,
+      payout,
+      gameType: "roulette",
+      details: {
+        pick: color,
+        result,
+        multiplier,
+        won
+      }
+    });
+    statusEl.textContent = won ? `You won ${payout} keys!` : "No luck this spin.";
+    lastSpinEl.textContent = `Last spin: ${formatRouletteColor(result)}`;
+  } catch (error) {
+    statusEl.textContent = error.message || "Spin failed.";
+  }
+}
+
+async function spinSlots() {
+  const statusEl = document.getElementById("slotStatus");
+  const lastSpinEl = document.getElementById("slotLastSpin");
+
+  if (!currentUser) {
+    statusEl.textContent = "Sign in first.";
+    return;
+  }
+
+  const amount = parseInt(document.getElementById("slotAmount").value, 10);
+  if (!amount || amount <= 0) {
+    statusEl.textContent = "Enter a valid bet amount.";
+    return;
+  }
+
+  const reels = [pickSlotSymbol(), pickSlotSymbol(), pickSlotSymbol()];
+  updateSlotVisual(reels);
+  const multiplier = getSlotMultiplier(reels);
+  const payout = Math.floor(amount * multiplier);
+
+  try {
+    await settleKeyGame({
+      amount,
+      payout,
+      gameType: "slots",
+      details: {
+        reels,
+        multiplier
+      }
+    });
+    lastSpinEl.textContent = `Last spin: ${reels.join(" ")}`;
+    statusEl.textContent = payout > 0
+      ? `Hit! ${reels.join(" ")} paid ${payout} keys (${multiplier}x).`
+      : `Missed: ${reels.join(" ")}`;
+  } catch (error) {
+    statusEl.textContent = error.message || "Spin failed.";
+  }
+}
+
+async function dropPlinkoBall() {
+  const statusEl = document.getElementById("plinkoStatus");
+  const lastDropEl = document.getElementById("plinkoLastDrop");
+
+  if (!currentUser) {
+    statusEl.textContent = "Sign in first.";
+    return;
+  }
+
+  const amount = parseInt(document.getElementById("plinkoAmount").value, 10);
+  const rows = PLINKO_ROWS;
+
+  if (!amount || amount <= 0) {
+    statusEl.textContent = "Enter valid plinko settings.";
+    return;
+  }
+
+  const slotIndex = runPlinkoPath(rows);
+  const multiplier = computePlinkoMultiplier(slotIndex);
+  const payout = Math.floor(amount * multiplier);
+
+  try {
+    await settleKeyGame({
+      amount,
+      payout,
+      gameType: "plinko",
+      details: {
+        rows,
+        slotIndex,
+        multiplier
+      }
+    });
+    drawPlinkoBoard(slotIndex);
+    lastDropEl.textContent = `Last drop: slot ${slotIndex}/${rows} • ${multiplier}x`;
+    statusEl.textContent = payout > 0
+      ? `Ball landed in slot ${slotIndex}. You got ${payout} keys.`
+      : `Ball landed in slot ${slotIndex}. No payout.`;
+  } catch (error) {
+    statusEl.textContent = error.message || "Drop failed.";
+  }
+}
+
+async function startBlackjack() {
+  if (!currentUser) {
+    setBlackjackStatus("Please sign in first.");
+    return;
+  }
+  const bet = parseInt(document.getElementById("blackjackBet").value, 10);
+  if (!bet || bet <= 0) {
+    setBlackjackStatus("Enter a valid bet.");
+    return;
+  }
+  if (bet > currentKeys) {
+    setBlackjackStatus("Not enough keys to cover the bet.");
+    return;
+  }
+
+  await userDocRef.update({
+    keys: firebase.firestore.FieldValue.increment(-bet)
+  });
+
+  activeBet = bet;
+  blackjackInPlay = true;
+  activeBlackjackRef = await db.collection("blackjackHands").add({
+    userId: currentUser.uid,
+    email: currentUser.email,
+    bet,
+    status: "in_progress",
+    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+  });
+  buildDeck();
+  playerHand = [drawCard(), drawCard()];
+  dealerHand = [drawCard(), drawCard()];
+  renderBlackjack();
+
+  const playerTotal = handValue(playerHand);
+  if (playerTotal === 21) {
+    await resolveBlackjack("blackjack");
+  } else {
+    setBlackjackStatus("Blackjack live. Hit or stand.");
+  }
+}
+
+function renderBlackjack() {
+  renderHand("playerHand", playerHand);
+  renderHand("dealerHand", dealerHand);
+  document.getElementById("playerTotal").textContent = handValue(playerHand);
+  document.getElementById("dealerTotal").textContent = handValue(dealerHand);
+}
+
+async function hit() {
+  if (!blackjackInPlay) {
+    setBlackjackStatus("Start a hand first.");
+    return;
+  }
+  playerHand.push(drawCard());
+  renderBlackjack();
+  const total = handValue(playerHand);
+  if (total > 21) {
+    await resolveBlackjack("bust");
+  }
+}
+
+async function stand() {
+  if (!blackjackInPlay) {
+    setBlackjackStatus("Start a hand first.");
+    return;
+  }
+  while (handValue(dealerHand) < 17) {
+    dealerHand.push(drawCard());
+  }
+  renderBlackjack();
+  const playerTotal = handValue(playerHand);
+  const dealerTotal = handValue(dealerHand);
+  if (dealerTotal > 21 || playerTotal > dealerTotal) {
+    await resolveBlackjack("win");
+  } else if (playerTotal === dealerTotal) {
+    await resolveBlackjack("push");
+  } else {
+    await resolveBlackjack("lose");
+  }
+}
+
+async function resolveBlackjack(result) {
+  blackjackInPlay = false;
+  let payout = 0;
+  if (result === "blackjack") {
+    payout = Math.floor(activeBet * 2.5);
+    setBlackjackStatus(`Blackjack! You win ${payout} keys.`);
+  } else if (result === "win") {
+    payout = activeBet * 2;
+    setBlackjackStatus(`You win ${payout} keys.`);
+  } else if (result === "push") {
+    payout = activeBet;
+    setBlackjackStatus("Push. Bet returned.");
+  } else if (result === "bust") {
+    setBlackjackStatus("Busted. Dealer wins.");
+  } else {
+    setBlackjackStatus("Dealer wins.");
+  }
+
+  if (payout > 0) {
+    await userDocRef.update({
+      keys: firebase.firestore.FieldValue.increment(payout)
+    });
+  }
+  if (activeBlackjackRef) {
+    await activeBlackjackRef.update({
+      status: "resolved",
+      result,
+      payout,
+      resolvedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+  }
+  activeBet = 0;
+  activeBlackjackRef = null;
+}
+
+async function resetBlackjack() {
+  if (blackjackInPlay && activeBlackjackRef) {
+    await activeBlackjackRef.update({
+      status: "abandoned",
+      resolvedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    activeBlackjackRef = null;
+  }
+  blackjackInPlay = false;
+  playerHand = [];
+  dealerHand = [];
+  activeBet = 0;
+  renderBlackjack();
+  setBlackjackStatus("Place a bet to start.");
+}
+
+async function enterLottery() {
+  if (!currentUser) {
+    document.getElementById("lotteryStatus").textContent = "Sign in first.";
+    return;
+  }
+  const amount = parseInt(document.getElementById("lotteryAmount").value, 10);
+  if (!amount || amount <= 0) {
+    document.getElementById("lotteryStatus").textContent = "Enter a valid amount.";
+    return;
+  }
+  if (amount > currentKeys) {
+    document.getElementById("lotteryStatus").textContent = "Not enough keys.";
+    return;
+  }
+
+  const lotteryRef = db.collection("lottery").doc("current");
+  const lotterySnap = await lotteryRef.get();
+  const lotteryData = lotterySnap.data() || {};
+  const roundId = lotteryData.roundId || Date.now().toString();
+  if (!lotteryData.roundId) {
+    await lotteryRef.set({ roundId }, { merge: true });
+  }
+  await userDocRef.update({
+    keys: firebase.firestore.FieldValue.increment(-amount)
+  });
+  await lotteryRef.set({
+    pool: firebase.firestore.FieldValue.increment(amount),
+    entries: firebase.firestore.FieldValue.increment(1)
+  }, { merge: true });
+
+  await db.collection("lotteryEntries").add({
+    userId: currentUser.uid,
+    email: currentUser.email,
+    roundId,
+    amount,
+    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+  });
+
+  document.getElementById("lotteryStatus").textContent = "Entry confirmed ✅";
+}
+
+async function loadLottery() {
+  db.collection("lottery").doc("current").onSnapshot(doc => {
+    const data = doc.data() || { pool: 0, entries: 0 };
+    document.getElementById("lotteryPool").textContent = `Pool: ${data.pool || 0} keys`;
+    document.getElementById("lotteryEntries").textContent = `Entries: ${data.entries || 0}`;
+    if (data.status === "resolved" && data.winnerName) {
+      document.getElementById("lotteryStatus").textContent = `Winner: ${data.winnerName}`;
+    }
+    resolveLotteryIfNeeded(data);
+  });
+}
+
+async function resolveLotteryIfNeeded(data) {
+  if (!currentUser || lotteryResolveInProgress) {
+    return;
+  }
+  if (data.winnerId || data.status === "resolved") {
+    return;
+  }
+
+  const now = new Date();
+  const endsAt = data.endsAt?.toDate ? data.endsAt.toDate() : null;
+  const shouldResolve = data.status === "closed"
+    || data.status === "ended"
+    || (endsAt && endsAt <= now);
+
+  if (!shouldResolve) {
+    return;
+  }
+
+  lotteryResolveInProgress = true;
+  const lotteryRef = db.collection("lottery").doc("current");
+  let lockAcquired = false;
+
+  try {
+    await db.runTransaction(async transaction => {
+      const snap = await transaction.get(lotteryRef);
+      const current = snap.data() || {};
+      if (current.winnerId || current.status === "resolved" || current.resolving) {
+        return;
+      }
+      transaction.update(lotteryRef, {
+        resolving: true,
+        status: "resolving",
+        resolvingAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      lockAcquired = true;
+    });
+
+    if (!lockAcquired) {
+      return;
+    }
+
+    const roundId = data.roundId || "default";
+    const entriesSnap = await db.collection("lotteryEntries")
+      .where("roundId", "==", roundId)
+      .orderBy("createdAt", "asc")
+      .get();
+
+    if (entriesSnap.empty) {
+      await lotteryRef.update({
+        status: "resolved",
+        winnerId: null,
+        winnerName: "No entries",
+        pool: 0,
+        entries: 0,
+        resolving: false,
+        resolvedAt: firebase.firestore.FieldValue.serverTimestamp(),
+        roundId: Date.now().toString()
+      });
+      return;
+    }
+
+    let total = 0;
+    entriesSnap.forEach(doc => {
+      total += doc.data().amount || 1;
+    });
+
+    let pick = Math.random() * total;
+    let winnerDoc = null;
+    entriesSnap.forEach(doc => {
+      if (winnerDoc) return;
+      pick -= (doc.data().amount || 1);
+      if (pick <= 0) {
+        winnerDoc = doc;
+      }
+    });
+
+    const winner = winnerDoc?.data() || {};
+    const poolAmount = data.pool || 0;
+
+    await lotteryRef.update({
+      status: "resolved",
+      winnerId: winner.userId || null,
+      winnerName: winner.email || "Unknown",
+      winnerAmount: winner.amount || 0,
+      pool: 0,
+      entries: 0,
+      resolving: false,
+      resolvedAt: firebase.firestore.FieldValue.serverTimestamp(),
+      roundId: Date.now().toString()
+    });
+
+    if (winner.userId && poolAmount > 0) {
+      await db.collection("users").doc(winner.userId).update({
+        keys: firebase.firestore.FieldValue.increment(poolAmount)
+      });
+    }
+  } catch (error) {
+    console.error("Lottery resolve failed:", error);
+    await lotteryRef.update({ resolving: false });
+  } finally {
+    lotteryResolveInProgress = false;
+  }
+}
+
+async function loadBets() {
+  db.collection("bets").orderBy("createdAt", "desc").onSnapshot(snapshot => {
+    const betsList = document.getElementById("betsList");
+    const betSelect = document.getElementById("betSelect");
+    betsList.innerHTML = "";
+    betSelect.innerHTML = "";
+
+    snapshot.forEach(doc => {
+      const bet = doc.data();
+      const isOpen = bet.status === "open";
+      if (isOpen) {
+        const option = document.createElement("option");
+        option.value = doc.id;
+        option.textContent = bet.title || "Untitled";
+        betSelect.appendChild(option);
+      }
+
+      const card = document.createElement("div");
+      card.className = "bet-card";
+      card.innerHTML = `
+        <strong>${bet.title || "Untitled Match"}</strong>
+        <div class="bet-meta">${bet.sideA || "Side A"} vs ${bet.sideB || "Side B"}</div>
+        <div class="bet-meta">${bet.totalA || 0} keys • ${bet.totalB || 0} keys</div>
+        <div class="muted">Status: ${bet.status || "open"}</div>
+      `;
+      betsList.appendChild(card);
+    });
+  });
+}
+
+async function placeBet() {
+  if (!currentUser) {
+    document.getElementById("betStatus").textContent = "Sign in first.";
+    return;
+  }
+  const betId = document.getElementById("betSelect").value;
+  const side = document.getElementById("betSide").value;
+  const amount = parseInt(document.getElementById("betAmount").value, 10);
+  if (!betId) {
+    document.getElementById("betStatus").textContent = "No active bets yet.";
+    return;
+  }
+  if (!amount || amount <= 0) {
+    document.getElementById("betStatus").textContent = "Enter a valid amount.";
+    return;
+  }
+  if (amount > currentKeys) {
+    document.getElementById("betStatus").textContent = "Not enough keys.";
+    return;
+  }
+
+  const betRef = db.collection("bets").doc(betId);
+  const betDoc = await betRef.get();
+  if (!betDoc.exists || betDoc.data().status !== "open") {
+    document.getElementById("betStatus").textContent = "Bet is no longer open.";
+    return;
+  }
+
+  await userDocRef.update({
+    keys: firebase.firestore.FieldValue.increment(-amount)
+  });
+
+  await db.collection("betEntries").add({
+    betId,
+    userId: currentUser.uid,
+    email: currentUser.email,
+    side,
+    amount,
+    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+  });
+
+  const updateField = side === "A" ? "totalA" : "totalB";
+  await betRef.update({
+    [updateField]: firebase.firestore.FieldValue.increment(amount)
+  });
+
+  document.getElementById("betStatus").textContent = "Bet placed ✅";
+}
+
+auth.onAuthStateChanged(user => {
+  currentUser = user;
+  if (!user) {
+    document.getElementById("loginNotice").style.display = "block";
+    updateStats();
+    return;
+  }
+  document.getElementById("loginNotice").style.display = "none";
+  userDocRef = db.collection("users").doc(user.uid);
+  userDocRef.onSnapshot(doc => {
+    const data = doc.data() || { keys: 0 };
+    currentKeys = data.keys || 0;
+    updateStats();
+  });
+});
+
+drawPlinkoBoard();
+loadLottery();
+loadBets();
+</script>
+</body>
+</html>
