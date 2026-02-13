@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Soundboard</title>
+
+<style>
+  :root{
+    --bg0:#07070a;
+    --bg1:#0b0b12;
+    --panel: rgba(255,255,255,.04);
+    --panel2: rgba(0,0,0,.22);
+    --line: rgba(255,255,255,.12);
+    --line2: rgba(255,255,255,.16);
+    --text: rgba(255,255,255,.88);
+    --muted: rgba(255,255,255,.62);
+
+    --p1:#b06cff;
+    --p2:#7c4dff;
+    --p3:#39d0ff;
+    --ok:#4dffb3;
+    --bad:#ff5c5c;
+
+    --r: 18px;
+    --r2: 26px;
+    --shadow: 0 22px 70px rgba(0,0,0,.60);
+    --shadow2: 0 14px 45px rgba(0,0,0,.35);
+  }
+
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0;
+    font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+    color: var(--text);
+    background:
+      radial-gradient(1100px 700px at 80% -10%, rgba(176,108,255,.18), transparent 60%),
+      radial-gradient(900px 650px at 12% 10%, rgba(57,208,255,.10), transparent 55%),
+      radial-gradient(900px 700px at 40% 120%, rgba(124,77,255,.14), transparent 60%),
+      linear-gradient(180deg, var(--bg0), var(--bg1));
+    overflow-x:hidden;
+    padding: 18px;
+  }
+
+  /* Scrollbars */
+  *::-webkit-scrollbar{width:10px;height:10px}
+  *::-webkit-scrollbar-thumb{
+    background: rgba(255,255,255,.10);
+    border: 2px solid rgba(0,0,0,.25);
+    border-radius: 999px;
+  }
+  *::-webkit-scrollbar-thumb:hover{background: rgba(255,255,255,.16)}
+  *::-webkit-scrollbar-corner{background: transparent}
+
+  .wrap{
+    max-width: 1100px;
+    margin: 0 auto;
+    display:flex;
+    flex-direction:column;
+    gap: 14px;
+    min-height: calc(100vh - 36px);
+  }
+
+  .top{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+
+  .titleCard{
+    flex: 1;
+    min-width: 280px;
+    border-radius: var(--r2);
+    border: 1px solid var(--line);
+    background:
+      radial-gradient(520px 320px at 70% 0%, rgba(176,108,255,.18), transparent 60%),
+      rgba(255,255,255,.03);
+    box-shadow: var(--shadow2);
+    padding: 16px 16px;
+  }
+
+  .titleRow{
+    display:flex;
+    align-items:center;
+    gap: 10px;
+  }
+
+  .logo{
+    width: 40px;
+    height: 40px;
+    border-radius: 16px;
+    border: 1px solid rgba(255,255,255,.14);
+    background:
+      radial-gradient(12px 12px at 30% 30%, rgba(255,255,255,.22), transparent 60%),
+      linear-gradient(135deg, rgba(176,108,255,.95), rgba(124,77,255,.80), rgba(57,208,255,.55));
+    box-shadow: 0 16px 55px rgba(176,108,255,.18);
+    position: relative;
+    overflow:hidden;
+  }
+  .logo::after{
+    content:"";
+    position:absolute;
+    inset:-45%;
+    background: conic-gradient(from 180deg, rgba(255,255,255,0), rgba(255,255,255,.14), rgba(255,255,255,0));
+    animation: spin 7s linear infinite;
+  }
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  h1{
+    margin:0;
+    font-size: 18px;
+    letter-spacing:-.2px;
+  }
+  .sub{
+    margin-top: 6px;
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.4;
+  }
+
+  .controls{
+    width: min(440px, 100%);
+    border-radius: var(--r2);
+    border: 1px solid var(--line);
+    background: rgba(255,255,255,.03);
+    box-shadow: var(--shadow2);
+    padding: 14px;
+    display:flex;
+    flex-direction:column;
+    gap: 12px;
+  }
+
+  .controlRow{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap: 12px;
+  }
+
+  .label{
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .value{
+    font-size: 12px;
+    font-weight: 900;
+    letter-spacing:-.1px;
+    color: rgba(255,255,255,.82);
+  }
+
+  .range{
+    width: 100%;
+    appearance:none;
+    height: 10px;
+    border-radius: 999px;
+    background: rgba(0,0,0,.22);
+    border: 1px solid rgba(255,255,255,.10);
+    outline:none;
+  }
+  .range::-webkit-slider-thumb{
+    appearance:none;
+    width: 18px;
+    height: 18px;
+    border-radius: 999px;
+    border: 1px solid rgba(255,255,255,.18);
+    background: linear-gradient(135deg, rgba(176,108,255,.95), rgba(124,77,255,.78));
+    box-shadow: 0 16px 40px rgba(124,77,255,.22);
+    cursor:pointer;
+  }
+  .range::-moz-range-thumb{
+    width: 18px;
+    height: 18px;
+    border-radius: 999px;
+    border: 1px solid rgba(255,255,255,.18);
+    background: linear-gradient(135deg, rgba(176,108,255,.95), rgba(124,77,255,.78));
+    cursor:pointer;
+  }
+
+  .modePill{
+    display:flex;
+    align-items:center;
+    gap: 10px;
+    justify-content:space-between;
+    border-radius: 16px;
+    border: 1px solid rgba(255,255,255,.10);
+    background: rgba(0,0,0,.18);
+    padding: 10px 12px;
+  }
+  .modeText{
+    display:flex;
+    flex-direction:column;
+    gap: 2px;
+  }
+  .modeText strong{
+    font-size: 13px;
+    letter-spacing:-.1px;
+  }
+  .modeText span{
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  /* Toggle switch */
+  .switch{
+    position: relative;
+    width: 56px;
+    height: 30px;
+    flex-shrink:0;
+  }
+  .switch input{display:none}
+  .track{
+    position:absolute; inset:0;
+    border-radius: 999px;
+    background: rgba(255,255,255,.10);
+    border: 1px solid rgba(255,255,255,.14);
+    transition: .16s ease;
+  }
+  .knob{
+    position:absolute;
+    top: 4px;
+    left: 4px;
+    width: 22px;
+    height: 22px;
+    border-radius: 999px;
+    background: rgba(255,255,255,.92);
+    transition: .16s ease;
+    box-shadow: 0 10px 28px rgba(0,0,0,.35);
+  }
+  .switch input:checked + .track{
+    background: linear-gradient(135deg, rgba(176,108,255,.90), rgba(124,77,255,.70));
+    border-color: rgba(255,255,255,.18);
+  }
+  .switch input:checked + .track .knob{
+    transform: translateX(26px);
+  }
+
+  .btn{
+    width: 100%;
+    padding: 12px 12px;
+    border-radius: 16px;
+    border: 1px solid rgba(255,255,255,.14);
+    background: rgba(255,255,255,.04);
+    color: rgba(255,255,255,.86);
+    cursor:pointer;
+    font-weight: 950;
+    letter-spacing:.2px;
+    transition: transform .12s ease, filter .12s ease, background .12s ease;
+  }
+  .btn:hover{background: rgba(255,255,255,.07); transform: translateY(-1px)}
+  .btn:active{transform: translateY(0)}
+  .btn.stop{
+    background: rgba(255,92,92,.14);
+    border-color: rgba(255,92,92,.28);
+  }
+  .btn.stop:hover{filter: brightness(1.06)}
+
+  .gridWrap{
+    flex:1;
+    border-radius: var(--r2);
+    border: 1px solid var(--line);
+    background: rgba(255,255,255,.02);
+    box-shadow: var(--shadow);
+    overflow:hidden;
+    display:flex;
+    flex-direction:column;
+  }
+
+  .gridHeader{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap: 12px;
+    padding: 12px 14px;
+    border-bottom: 1px solid rgba(255,255,255,.10);
+    background: rgba(0,0,0,.22);
+  }
+  .gridHeader .left{
+    display:flex;
+    flex-direction:column;
+    gap: 2px;
+  }
+  .gridHeader .left strong{font-size:13px}
+  .gridHeader .left span{font-size:12px; color: var(--muted)}
+  .gridHeader .right{
+    font-size: 12px;
+    color: rgba(255,255,255,.70);
+    display:flex;
+    align-items:center;
+    gap: 8px;
+  }
+  .dot{
+    width:8px; height:8px; border-radius:999px;
+    background: rgba(77,255,179,.85);
+    box-shadow: 0 0 0 4px rgba(77,255,179,.12);
+  }
+
+  #soundboard{
+    padding: 14px;
+    display:grid;
+    gap: 10px;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    overflow:auto;
+  }
+
+  @media (max-width: 980px){
+    #soundboard{grid-template-columns: repeat(3, minmax(0, 1fr));}
+  }
+  @media (max-width: 700px){
+    #soundboard{grid-template-columns: repeat(2, minmax(0, 1fr));}
+    body{padding: 12px;}
+  }
+
+  .soundBtn{
+    border-radius: 18px;
+    border: 1px solid rgba(255,255,255,.12);
+    background:
+      radial-gradient(140px 90px at 20% 0%, rgba(176,108,255,.16), transparent 60%),
+      rgba(255,255,255,.03);
+    color: rgba(255,255,255,.88);
+    padding: 12px 12px;
+    cursor:pointer;
+    text-align:left;
+    transition: transform .12s ease, background .12s ease, border-color .12s ease, filter .12s ease;
+    min-height: 64px;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    gap: 6px;
+  }
+  .soundBtn:hover{
+    transform: translateY(-1px);
+    background:
+      radial-gradient(140px 90px at 20% 0%, rgba(176,108,255,.22), transparent 60%),
+      rgba(255,255,255,.06);
+    border-color: rgba(255,255,255,.18);
+  }
+  .soundBtn:active{transform: translateY(0)}
+  .soundBtn .name{
+    font-weight: 950;
+    letter-spacing:-.1px;
+    font-size: 13px;
+  }
+  .soundBtn .meta{
+    font-size: 12px;
+    color: rgba(255,255,255,.62);
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap: 8px;
+  }
+
+  .playing{
+    outline: 3px solid rgba(176,108,255,.22);
+    box-shadow: 0 22px 60px rgba(124,77,255,.16);
+  }
+
+  .toast{
+    position: fixed;
+    left: 50%;
+    bottom: 18px;
+    transform: translateX(-50%);
+    padding: 10px 12px;
+    border-radius: 999px;
+    border: 1px solid rgba(255,255,255,.14);
+    background: rgba(0,0,0,.62);
+    color: rgba(255,255,255,.88);
+    font-size: 12px;
+    backdrop-filter: blur(14px);
+    box-shadow: 0 18px 60px rgba(0,0,0,.55);
+    opacity: 0;
+    pointer-events:none;
+    transition: opacity .18s ease, transform .18s ease;
+    z-index: 99999;
+    white-space: nowrap;
+  }
+  .toast.show{
+    opacity: 1;
+    transform: translateX(-50%) translateY(-4px);
+  }
+</style>
+</head>
+
+<body>
+  <div class="wrap">
+    <div class="top">
+      <div class="titleCard">
+        <div class="titleRow">
+          <div class="logo" aria-hidden="true"></div>
+          <div>
+            <h1>Soundboard</h1>
+            <div class="sub">Click a sound to play. Use the controls to set volume and playback mode.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="controls" aria-label="Controls">
+        <div>
+          <div class="controlRow">
+            <div class="label">Volume</div>
+            <div class="value" id="volume-label">100%</div>
+          </div>
+          <input type="range" class="range" id="volume" min="0" max="2" step="0.01" value="1" />
+          <div class="label" style="margin-top:8px">Tip: 1.0 = normal, 2.0 = extra loud</div>
+        </div>
+
+        <div class="modePill">
+          <div class="modeText">
+            <strong id="modeTitle">Multi-play</strong>
+            <span id="modeDesc">Multiple sounds can play at once.</span>
+          </div>
+
+          <!-- Slider switch: checked = Multi -->
+          <label class="switch" title="Toggle single-play / multi-play">
+            <input id="modeToggle" type="checkbox" checked />
+            <span class="track"><span class="knob"></span></span>
+          </label>
+        </div>
+
+        <button class="btn stop" id="stopAll">Stop all sounds</button>
+      </div>
+    </div>
+
+    <div class="gridWrap">
+      <div class="gridHeader">
+        <div class="left">
+          <strong>Sounds</strong>
+          <span>Right now: <span id="countLabel">0</span> loaded</span>
+        </div>
+        <div class="right"><span class="dot"></span><span id="statusLabel">Ready</span></div>
+      </div>
+
+      <div id="soundboard"></div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+<script>
+  // Web Audio setup
+  const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+
+  // UI
+  const volumeSlider = document.getElementById("volume");
+  const volumeLabel  = document.getElementById("volume-label");
+  const modeToggle   = document.getElementById("modeToggle");
+  const modeTitle    = document.getElementById("modeTitle");
+  const modeDesc     = document.getElementById("modeDesc");
+  const stopAllBtn   = document.getElementById("stopAll");
+  const statusLabel  = document.getElementById("statusLabel");
+  const countLabel   = document.getElementById("countLabel");
+  const toastEl      = document.getElementById("toast");
+
+  let currentVolume = 1.0;
+
+  // Multi-play toggle:
+  // checked = multi-play (allow multiple sounds)
+  // unchecked = single-play (stop previous sound when new starts)
+  const isMultiPlay = () => modeToggle.checked;
+
+  function updateModeUI(){
+    if (isMultiPlay()){
+      modeTitle.textContent = "Multi-play";
+      modeDesc.textContent  = "Multiple sounds can play at once.";
+    } else {
+      modeTitle.textContent = "Single-play";
+      modeDesc.textContent  = "Only one sound plays at a time.";
+    }
+  }
+  updateModeUI();
+  modeToggle.addEventListener("change", updateModeUI);
+
+  // Toast
+  let toastTimer = null;
+  function toast(msg){
+    toastEl.textContent = msg;
+    toastEl.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(()=>toastEl.classList.remove("show"), 1400);
+  }
+
+  // Volume slider logic
+  volumeSlider.addEventListener("input", () => {
+    currentVolume = parseFloat(volumeSlider.value);
+    volumeLabel.textContent = Math.round(currentVolume * 100) + "%";
+  });
+
+  // Sound list
+  const sounds = [
+    { file: "/sounds/Android.mp3", label: "Android" },
+    { file: "/sounds/MegaKnight.mp3", label: "Mega Knight" },
+    { file: "/sounds/YoPhoneLingLing.mp3", label: "Yo Phone Ling Ling" },
+    { file: "/sounds/Error.mp3", label: "Error" },
+    { file: "/sounds/67.mp3", label: "67" },
+    { file: "/sounds/GetOut.mp3", label: "Get Out" },
+    { file: "/sounds/MetalPipe.mp3", label: "Metal Pipe" },
+    { file: "/sounds/PleaseSpeed.mp3", label: "Please Speed" },
+    { file: "/sounds/ApplePay.mp3", label: "Apple Pay" },
+    { file: "/sounds/VineBoom.mp3", label: "Vine Boom" },
+    { file: "/sounds/Fahhhhh.mp3", label: "Fahhhhh" },
+    { file: "/sounds/999-social-credit-siren.mp3", label: "-999 social credit" },
+    { file: "/sounds/anime-ahh.mp3", label: "Moan" },
+    { file: "/sounds/city-boy.mp3", label: "City Boy" },
+    { file: "/sounds/dexter-meme.mp3", label: "Dexter" },
+    { file: "/sounds/he-he-he-ha-clash-royale-deep-fried.mp3", label: "He He He Ha (CR)" },
+    { file: "/sounds/hub-intro-sound.mp3", label: "Hub intro" },
+    { file: "/sounds/indian-song.mp3", label: "Indian Song" },
+    { file: "/sounds/nya_2xyALFL.mp3", label: "Corrupted name" },
+    { file: "/sounds/skeleton-with-shield.mp3", label: "Skeleton with shield" },
+    { file: "/sounds/sybau.mp3", label: "sybau music" },
+    { file: "/sounds/we-are-charlie-kirk-song.mp3", label: "Charlie Kirk Song" },
+    { file: "/sounds/gangsterparadise.mp3", label: "Gangster Paradise" }
+  ];
+
+  // Caching decoded audio to make it snappy after first click
+  const decodedCache = new Map(); // file -> AudioBuffer
+
+  // Track active sources so we can stop them
+  const activeSources = new Set(); // AudioBufferSourceNode
+  const activeButtons = new Map(); // source -> button (for UI highlight)
+
+  function setStatus(text){ statusLabel.textContent = text; }
+
+  async function decodeOnce(url){
+    if (decodedCache.has(url)) return decodedCache.get(url);
+    setStatus("Loading…");
+    const res = await fetch(url, { cache: "no-store" });
+    if (!res.ok) throw new Error("Fetch failed: " + res.status);
+    const buffer = await res.arrayBuffer();
+    const audioBuffer = await audioContext.decodeAudioData(buffer);
+    decodedCache.set(url, audioBuffer);
+    setStatus("Ready");
+    countLabel.textContent = decodedCache.size;
+    return audioBuffer;
+  }
+
+  function stopAll(){
+    for (const src of Array.from(activeSources)) {
+      try { src.stop(); } catch {}
+    }
+    activeSources.clear();
+    // Remove playing UI
+    document.querySelectorAll(".soundBtn.playing").forEach(b => b.classList.remove("playing"));
+    toast("Stopped");
+  }
+
+  stopAllBtn.addEventListener("click", () => stopAll());
+
+  const container = document.getElementById("soundboard");
+
+  // Create buttons
+  sounds.forEach((s) => {
+    const btn = document.createElement("button");
+    btn.className = "soundBtn";
+    btn.innerHTML = `
+      <div class="name">${s.label}</div>
+      <div class="meta"><span>${s.file.split("/").pop()}</span><span>▶</span></div>
+    `;
+
+    btn.addEventListener("click", async () => {
+      try{
+        // Required for some browsers
+        await audioContext.resume();
+
+        // Single-play mode: stop everything before playing the new sound
+        if (!isMultiPlay()) stopAll();
+
+        const audioBuffer = await decodeOnce(s.file);
+
+        const source = audioContext.createBufferSource();
+        source.buffer = audioBuffer;
+
+        const gainNode = audioContext.createGain();
+        gainNode.gain.value = currentVolume;
+
+        source.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+
+        // Track active
+        activeSources.add(source);
+        activeButtons.set(source, btn);
+        btn.classList.add("playing");
+
+        source.onended = () => {
+          activeSources.delete(source);
+          const b = activeButtons.get(source);
+          if (b) b.classList.remove("playing");
+          activeButtons.delete(source);
+        };
+
+        source.start(0);
+      } catch (err){
+        console.error(err);
+        setStatus("Error");
+        toast("Could not play sound");
+        setTimeout(()=>setStatus("Ready"), 900);
+      }
+    });
+
+    container.appendChild(btn);
+  });
+
+  // label initial
+  countLabel.textContent = decodedCache.size;
+
+  // Extra: stop sounds when tab becomes hidden in single-play mode (optional nice behavior)
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden && !isMultiPlay()) stopAll();
+  });
+</script>
+
+</body>
+</html>
