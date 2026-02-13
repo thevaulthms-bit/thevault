@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Homework Forum • The Vault</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap">
+
+  <style>
+    * { box-sizing: border-box; }
+
+    body{
+      margin:0;
+      min-height:100vh;
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      color:#eef1ff;
+      background:
+        radial-gradient(1200px 700px at 20% -10%, rgba(176,108,255,.28), transparent 60%),
+        radial-gradient(1100px 700px at 90% 10%, rgba(75,111,201,.20), transparent 55%),
+        radial-gradient(900px 600px at 50% 110%, rgba(176,108,255,.12), transparent 60%),
+        #06060a;
+      display:grid;
+      place-items:center;
+      padding:24px;
+    }
+
+    .shell{
+      width:min(920px, 100%);
+      border-radius: 22px;
+      border: 1px solid rgba(155,215,255,.14);
+      background: rgba(10,10,14,.78);
+      box-shadow: 0 30px 90px rgba(0,0,0,.55);
+      overflow:hidden;
+      position:relative;
+    }
+
+    .glow{
+      position:absolute;
+      inset:-2px;
+      pointer-events:none;
+      background:
+        radial-gradient(600px 220px at 20% 0%, rgba(176,108,255,.22), transparent 60%),
+        radial-gradient(520px 260px at 85% 10%, rgba(75,111,201,.18), transparent 60%);
+      filter: blur(0px);
+      opacity:.9;
+    }
+
+    header{
+      position:relative;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:14px;
+      padding:18px 20px;
+      background: rgba(8,8,12,.72);
+      border-bottom: 1px solid rgba(155,215,255,.12);
+      backdrop-filter: blur(10px);
+    }
+
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      min-width:0;
+    }
+
+    .logo{
+      width:42px; height:42px;
+      border-radius:14px;
+      border:1px solid rgba(155,215,255,.16);
+      background:
+        radial-gradient(circle at 30% 25%, rgba(176,108,255,.55), transparent 55%),
+        radial-gradient(circle at 70% 70%, rgba(75,111,201,.45), transparent 60%),
+        rgba(255,255,255,.03);
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.04);
+      display:grid;
+      place-items:center;
+      font-weight:800;
+      color:#f3e7ff;
+      letter-spacing:.5px;
+      flex:0 0 auto;
+    }
+
+    .brand h1{
+      margin:0;
+      font-size:16px;
+      letter-spacing:.2px;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+
+    .brand p{
+      margin:2px 0 0 0;
+      font-size:12px;
+      color: rgba(235,240,255,.7);
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+
+    .btn{
+      appearance:none;
+      border:none;
+      cursor:pointer;
+      padding:10px 12px;
+      border-radius: 12px;
+      color:#eef1ff;
+      font-weight:700;
+      background: rgba(35,45,85,.95);
+      border:1px solid rgba(155,215,255,.14);
+      transition: transform .06s ease, filter .15s ease, background .15s ease;
+      white-space:nowrap;
+    }
+    .btn:hover{ filter: brightness(1.05); }
+    .btn:active{ transform: scale(.99); }
+
+    main{
+      position:relative;
+      padding:28px 20px 22px;
+    }
+
+    .hero{
+      display:grid;
+      gap:16px;
+      grid-template-columns: 1fr;
+      padding:18px;
+      border-radius: 18px;
+      border:1px solid rgba(155,215,255,.12);
+      background: rgba(0,0,0,.18);
+    }
+
+    .badge{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:6px 10px;
+      border-radius:999px;
+      font-size:12px;
+      color:#cfe9ff;
+      border:1px solid rgba(155,215,255,.18);
+      background: rgba(75,111,201,.12);
+      width:max-content;
+    }
+
+    .title{
+      margin:0;
+      font-size:24px;
+      letter-spacing:.2px;
+      line-height:1.15;
+      color:#f3e7ff;
+    }
+
+    .muted{
+      margin:0;
+      color: rgba(235,240,255,.72);
+      font-size:13px;
+      line-height:1.45;
+      max-width: 70ch;
+    }
+
+    .progress{
+      margin-top:8px;
+      height:12px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(155,215,255,.12);
+      overflow:hidden;
+      position:relative;
+    }
+
+    .bar{
+      height:100%;
+      width:62%;
+      border-radius:999px;
+      background: linear-gradient(135deg, rgba(176,108,255,.95), rgba(75,111,201,.95));
+      position:relative;
+    }
+
+    .bar::after{
+      content:"";
+      position:absolute;
+      inset:0;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,.25), transparent);
+      transform: translateX(-60%);
+      animation: shimmer 2.1s infinite;
+    }
+
+    @keyframes shimmer{
+      0%{ transform: translateX(-60%); }
+      100%{ transform: translateX(60%); }
+    }
+
+    .grid{
+      display:grid;
+      gap:12px;
+      grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+      margin-top:16px;
+    }
+
+    .tile{
+      padding:14px;
+      border-radius: 16px;
+      border:1px solid rgba(155,215,255,.12);
+      background: rgba(10,10,14,.55);
+    }
+
+    .tile h3{
+      margin:0 0 6px 0;
+      font-size:13px;
+      color:#e9dcff;
+      letter-spacing:.2px;
+    }
+
+    .tile p{
+      margin:0;
+      font-size:12px;
+      color: rgba(235,240,255,.68);
+      line-height:1.35;
+    }
+
+    footer{
+      padding:14px 20px 18px;
+      border-top: 1px solid rgba(155,215,255,.12);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      flex-wrap:wrap;
+      background: rgba(8,8,12,.55);
+    }
+
+    .footnote{
+      font-size:12px;
+      color: rgba(235,240,255,.62);
+    }
+
+    .dot{
+      width:10px; height:10px;
+      border-radius:999px;
+      background: rgba(46,204,113,.95);
+      box-shadow: 0 0 0 6px rgba(46,204,113,.12);
+      display:inline-block;
+      margin-right:8px;
+      vertical-align:middle;
+      animation: pulse 1.6s infinite;
+    }
+
+    @keyframes pulse{
+      0%{ transform: scale(.95); opacity: .95; }
+      50%{ transform: scale(1.05); opacity: .75; }
+      100%{ transform: scale(.95); opacity: .95; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="shell">
+    <div class="glow"></div>
+
+    <header>
+      <div class="brand">
+        <div class="logo">V</div>
+        <div style="min-width:0;">
+          <h1>Homework Forum</h1>
+          <p>Community posts + key unlocks</p>
+        </div>
+      </div>
+
+      <button class="btn" onclick="history.back()">← Back</button>
+    </header>
+
+    <main>
+      <div class="hero">
+        <div class="badge">🛠️ Work in progress</div>
+        <h2 class="title">This section is being rebuilt.</h2>
+        <p class="muted">
+          Uploading and moderation are temporarily paused while we finish the next version.
+          Check back soon — this page will auto-upgrade once the rollout is done.
+        </p>
+
+        <div class="progress" aria-label="progress">
+          <div class="bar"></div>
+        </div>
+
+        <div class="grid">
+          <div class="tile">
+            <h3>What’s coming</h3>
+            <p>Clean uploads, review queue, and faster loading.</p>
+          </div>
+          <div class="tile">
+            <h3>Keys</h3>
+            <p>Unlock content with keys and earn rewards when approved.</p>
+          </div>
+          <div class="tile">
+            <h3>Moderation</h3>
+            <p>Better tools for mods: approve/deny, notes, and logs.</p>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <footer>
+      <div class="footnote"><span class="dot"></span>Status: Deploying updates</div>
+      <div class="footnote">The Vault • Forum Module</div>
+    </footer>
+  </div>
+</body>
+</html>
