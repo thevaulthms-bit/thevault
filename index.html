@@ -1,0 +1,1044 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>The Vault — Data Protection</title>
+  <meta name="description" content="The Vault protects sensitive data with zero-trust encryption, access controls, and audit trails." />
+
+  <style>
+    :root{
+      --bg0:#07070a;
+      --bg1:#0b0b12;
+      --card:#0f1020;
+      --card2:#0b0c18;
+      --line:rgba(255,255,255,.10);
+      --text:rgba(255,255,255,.88);
+      --muted:rgba(255,255,255,.62);
+      --muted2:rgba(255,255,255,.45);
+
+      --p1:#b06cff;
+      --p2:#7c4dff;
+      --p3:#39d0ff;
+      --ok:#4dffb3;
+      --warn:#ffd36c;
+
+      --shadow: 0 20px 60px rgba(0,0,0,.55);
+      --radius:18px;
+      --radius2:26px;
+      --max:1120px;
+      --blur: blur(18px);
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      color:var(--text);
+      background:
+        radial-gradient(1100px 700px at 80% -10%, rgba(176,108,255,.22), transparent 60%),
+        radial-gradient(900px 650px at 10% 10%, rgba(57,208,255,.12), transparent 55%),
+        radial-gradient(900px 700px at 40% 120%, rgba(124,77,255,.16), transparent 60%),
+        linear-gradient(180deg, var(--bg0), var(--bg1));
+      overflow-x:hidden;
+    }
+
+    a{color:inherit; text-decoration:none}
+    button, input{font:inherit}
+    .wrap{max-width:var(--max); margin:0 auto; padding:22px 18px 90px}
+    .topbar{
+      position:sticky; top:0; z-index:50;
+      background: rgba(7,7,10,.55);
+      backdrop-filter: var(--blur);
+      border-bottom:1px solid var(--line);
+    }
+    .topbar .inner{
+      max-width:var(--max); margin:0 auto; padding:14px 18px;
+      display:flex; align-items:center; justify-content:space-between; gap:14px;
+    }
+    .brand{
+      display:flex; align-items:center; gap:12px;
+      letter-spacing:.2px;
+    }
+    .logo{
+      width:34px; height:34px; border-radius:12px;
+      background:
+        radial-gradient(12px 12px at 30% 30%, rgba(255,255,255,.25), transparent 60%),
+        linear-gradient(135deg, rgba(176,108,255,.95), rgba(124,77,255,.85), rgba(57,208,255,.55));
+      box-shadow: 0 10px 30px rgba(176,108,255,.22);
+      border:1px solid rgba(255,255,255,.14);
+      position:relative;
+      overflow:hidden;
+    }
+    .logo:after{
+      content:"";
+      position:absolute; inset:-40%;
+      background: conic-gradient(from 180deg, rgba(255,255,255,.0), rgba(255,255,255,.18), rgba(255,255,255,.0));
+      animation: spin 7s linear infinite;
+    }
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .brand .name{font-weight:700}
+    .brand .tag{color:var(--muted); font-size:13px}
+    nav{
+      display:flex; align-items:center; gap:16px;
+      color:var(--muted);
+      font-size:14px;
+    }
+    nav a{padding:8px 10px; border-radius:12px}
+    nav a:hover{background:rgba(255,255,255,.06); color:var(--text)}
+    .actions{display:flex; align-items:center; gap:10px}
+    .btn{
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.04);
+      color:var(--text);
+      padding:10px 12px;
+      border-radius:14px;
+      cursor:pointer;
+      transition: transform .12s ease, background .12s ease, border-color .12s ease;
+      display:inline-flex; align-items:center; gap:10px;
+      user-select:none;
+    }
+    .btn:hover{background:rgba(255,255,255,.07); transform: translateY(-1px)}
+    .btn:active{transform: translateY(0px)}
+    .btn.primary{
+      background: linear-gradient(135deg, rgba(176,108,255,.95), rgba(124,77,255,.80));
+      border-color: rgba(255,255,255,.18);
+      box-shadow: 0 18px 60px rgba(124,77,255,.20);
+    }
+    .btn.primary:hover{filter:saturate(1.1) brightness(1.05)}
+    .pill{
+      font-size:12px; color:rgba(0,0,0,.75);
+      background: linear-gradient(135deg, rgba(77,255,179,.95), rgba(57,208,255,.70));
+      padding:6px 10px;
+      border-radius:999px;
+      font-weight:700;
+    }
+
+    /* Hero */
+    .hero{
+      padding:44px 0 18px;
+      display:grid;
+      grid-template-columns: 1.1fr .9fr;
+      gap:22px;
+      align-items:stretch;
+    }
+    .hero h1{
+      margin:10px 0 12px;
+      font-size: clamp(34px, 5vw, 56px);
+      line-height:1.02;
+      letter-spacing:-.8px;
+    }
+    .sub{
+      color:var(--muted);
+      font-size:16px;
+      line-height:1.6;
+      max-width:62ch;
+    }
+    .heroCard{
+      border:1px solid var(--line);
+      background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
+      border-radius: var(--radius2);
+      padding:18px;
+      box-shadow: var(--shadow);
+      position:relative;
+      overflow:hidden;
+    }
+    .heroCard:before{
+      content:"";
+      position:absolute; inset:-2px;
+      background:
+        radial-gradient(400px 260px at 75% 15%, rgba(176,108,255,.22), transparent 60%),
+        radial-gradient(420px 280px at 20% 80%, rgba(57,208,255,.12), transparent 60%);
+      pointer-events:none;
+    }
+    .heroCard .content{position:relative}
+    .heroCTAs{display:flex; gap:10px; flex-wrap:wrap; margin-top:16px}
+    .miniRow{
+      display:flex; gap:10px; flex-wrap:wrap; margin-top:14px;
+      color:var(--muted2); font-size:13px;
+    }
+    .miniRow span{
+      display:inline-flex; align-items:center; gap:8px;
+      padding:8px 10px;
+      border-radius:999px;
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.03);
+    }
+    .dot{
+      width:9px; height:9px; border-radius:50%;
+      background: linear-gradient(135deg, var(--p1), var(--p3));
+      box-shadow: 0 0 0 4px rgba(176,108,255,.12);
+    }
+
+    /* Right column visual */
+    .viz{
+      border:1px solid var(--line);
+      background:
+        radial-gradient(500px 320px at 60% 25%, rgba(176,108,255,.20), transparent 60%),
+        linear-gradient(180deg, rgba(15,16,32,.9), rgba(11,12,24,.75));
+      border-radius: var(--radius2);
+      padding:18px;
+      box-shadow: var(--shadow);
+      overflow:hidden;
+      position:relative;
+    }
+    .viz .grid{
+      position:absolute; inset:0;
+      background-image:
+        linear-gradient(rgba(255,255,255,.06) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.06) 1px, transparent 1px);
+      background-size: 42px 42px;
+      opacity:.18;
+      mask-image: radial-gradient(200px 200px at 60% 30%, black 40%, transparent 75%);
+      pointer-events:none;
+    }
+    .vaultShell{
+      position:relative;
+      border:1px solid rgba(255,255,255,.14);
+      border-radius: 22px;
+      padding:16px;
+      background: rgba(0,0,0,.18);
+      backdrop-filter: var(--blur);
+    }
+    .vaultTop{
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+      margin-bottom:12px;
+    }
+    .vaultTop .label{
+      display:flex; align-items:center; gap:10px;
+      font-weight:700;
+    }
+    .chip{
+      width:10px; height:10px; border-radius:50%;
+      background: var(--ok);
+      box-shadow: 0 0 0 5px rgba(77,255,179,.12);
+    }
+    .meter{
+      height:10px; border-radius:999px;
+      background: rgba(255,255,255,.07);
+      overflow:hidden;
+      border:1px solid rgba(255,255,255,.10);
+    }
+    .meter > div{
+      height:100%;
+      width: 84%;
+      background: linear-gradient(90deg, rgba(77,255,179,.9), rgba(57,208,255,.75), rgba(176,108,255,.8));
+      border-radius:999px;
+    }
+    .kpis{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:12px;
+      margin-top:12px;
+    }
+    .kpi{
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.03);
+      border-radius:18px;
+      padding:12px;
+    }
+    .kpi .t{color:var(--muted2); font-size:12px}
+    .kpi .v{font-size:18px; font-weight:800; margin-top:6px}
+    .kpi .v small{font-size:12px; color:var(--muted)}
+    .stream{
+      margin-top:12px;
+      border:1px solid rgba(255,255,255,.12);
+      border-radius:18px;
+      background: rgba(255,255,255,.03);
+      padding:12px;
+    }
+    .line{
+      display:flex; align-items:center; justify-content:space-between;
+      font-size:13px;
+      color:var(--muted);
+      padding:8px 0;
+      border-bottom:1px solid rgba(255,255,255,.08);
+    }
+    .line:last-child{border-bottom:0}
+    .badge{
+      font-size:12px;
+      padding:6px 10px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.18);
+      color: rgba(255,255,255,.72);
+    }
+    .badge.ok{border-color: rgba(77,255,179,.35); color: rgba(77,255,179,.9)}
+    .badge.lock{border-color: rgba(176,108,255,.35); color: rgba(176,108,255,.95)}
+    .badge.warn{border-color: rgba(255,211,108,.35); color: rgba(255,211,108,.95)}
+
+    /* Sections */
+    .section{
+      margin-top:34px;
+      border-top:1px solid rgba(255,255,255,.08);
+      padding-top:28px;
+    }
+    .section h2{
+      margin:0 0 10px;
+      font-size:22px;
+      letter-spacing:-.2px;
+    }
+    .section p.lead{
+      margin:0 0 18px;
+      color:var(--muted);
+      line-height:1.7;
+      max-width:70ch;
+    }
+
+    .cards{
+      display:grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap:14px;
+    }
+    .card{
+      border:1px solid rgba(255,255,255,.10);
+      border-radius: var(--radius);
+      padding:16px;
+      background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
+      box-shadow: 0 18px 45px rgba(0,0,0,.30);
+      position:relative;
+      overflow:hidden;
+      min-height:140px;
+    }
+    .card:before{
+      content:"";
+      position:absolute; inset:-1px;
+      background: radial-gradient(320px 240px at 20% 10%, rgba(176,108,255,.18), transparent 55%);
+      pointer-events:none;
+      opacity:.9;
+    }
+    .card > *{position:relative}
+    .icon{
+      width:34px; height:34px;
+      border-radius:14px;
+      display:grid; place-items:center;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.20);
+      margin-bottom:10px;
+      box-shadow: 0 14px 40px rgba(176,108,255,.10);
+    }
+    .card h3{margin:0 0 6px; font-size:16px}
+    .card p{margin:0; color:var(--muted); line-height:1.6; font-size:14px}
+
+    /* Pricing */
+    .pricing{
+      display:grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap:14px;
+      align-items:stretch;
+    }
+    .priceCard{
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.03);
+      border-radius: var(--radius2);
+      padding:18px;
+      box-shadow: var(--shadow);
+      position:relative;
+      overflow:hidden;
+    }
+    .priceCard.featured{
+      border-color: rgba(176,108,255,.35);
+      background: linear-gradient(180deg, rgba(176,108,255,.16), rgba(255,255,255,.03));
+      transform: translateY(-2px);
+    }
+    .priceCard .top{
+      display:flex; align-items:flex-start; justify-content:space-between; gap:12px;
+      margin-bottom:12px;
+    }
+    .priceCard .plan{font-weight:800; letter-spacing:.2px}
+    .priceCard .desc{color:var(--muted); font-size:13px; line-height:1.5; margin-top:6px}
+    .price{
+      font-size:34px; font-weight:900; letter-spacing:-.6px;
+      margin:10px 0 8px;
+    }
+    .price small{font-size:13px; color:var(--muted)}
+    ul.clean{list-style:none; padding:0; margin:12px 0 0}
+    ul.clean li{
+      display:flex; gap:10px; align-items:flex-start;
+      padding:8px 0;
+      border-bottom:1px solid rgba(255,255,255,.08);
+      color:var(--muted);
+      font-size:14px;
+    }
+    ul.clean li:last-child{border-bottom:0}
+    .check{
+      width:18px; height:18px; border-radius:7px;
+      background: rgba(77,255,179,.16);
+      border:1px solid rgba(77,255,179,.32);
+      position:relative;
+      margin-top:2px;
+      flex:0 0 18px;
+    }
+    .check:after{
+      content:"";
+      position:absolute;
+      left:5px; top:3px;
+      width:6px; height:9px;
+      border-right:2px solid rgba(77,255,179,.95);
+      border-bottom:2px solid rgba(77,255,179,.95);
+      transform: rotate(40deg);
+    }
+
+    /* FAQ */
+    .faq{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:14px;
+    }
+    .qa{
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.03);
+      border-radius: var(--radius);
+      padding:14px 14px 12px;
+    }
+    .q{
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+      cursor:pointer; user-select:none;
+      font-weight:700;
+    }
+    .q span{color:rgba(255,255,255,.88)}
+    .caret{
+      width:26px; height:26px; border-radius:12px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.18);
+      display:grid; place-items:center;
+      transition: transform .15s ease;
+      color:rgba(255,255,255,.74);
+      flex:0 0 auto;
+    }
+    .a{
+      margin-top:10px;
+      color:var(--muted);
+      line-height:1.65;
+      font-size:14px;
+      display:none;
+    }
+    .qa.open .a{display:block}
+    .qa.open .caret{transform: rotate(180deg)}
+
+    /* Footer */
+    footer{
+      margin-top:42px;
+      padding-top:20px;
+      border-top:1px solid rgba(255,255,255,.08);
+      color:var(--muted2);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      flex-wrap:wrap;
+      font-size:13px;
+    }
+
+    /* Modal */
+    .backdrop{
+      position:fixed; inset:0;
+      background: rgba(0,0,0,.65);
+      display:none;
+      align-items:center; justify-content:center;
+      padding:18px;
+      z-index:100;
+    }
+    .backdrop.show{display:flex}
+    .modal{
+      width:min(520px, 100%);
+      border-radius: 26px;
+      border:1px solid rgba(255,255,255,.14);
+      background:
+        radial-gradient(520px 300px at 70% 0%, rgba(176,108,255,.20), transparent 60%),
+        linear-gradient(180deg, rgba(15,16,32,.96), rgba(10,10,18,.96));
+      box-shadow: 0 30px 90px rgba(0,0,0,.70);
+      padding:18px;
+      position:relative;
+      overflow:hidden;
+    }
+    .modal h3{margin:0 0 6px; font-size:18px}
+    .modal p{margin:0 0 14px; color:var(--muted); line-height:1.6; font-size:14px}
+    .field{
+      display:flex; gap:10px; align-items:center;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.03);
+      border-radius: 16px;
+      padding:10px;
+    }
+    .field input{
+      width:100%;
+      border:0; outline:0;
+      background:transparent;
+      color:var(--text);
+      padding:6px 8px;
+      letter-spacing:.3px;
+    }
+    .hint{
+      margin-top:10px;
+      color:var(--muted2);
+      font-size:12px;
+    }
+    .toast{
+      position:fixed; left:50%; bottom:22px;
+      transform:translateX(-50%);
+      background: rgba(0,0,0,.60);
+      border:1px solid rgba(255,255,255,.14);
+      backdrop-filter: var(--blur);
+      color: rgba(255,255,255,.84);
+      padding:10px 12px;
+      border-radius: 14px;
+      display:none;
+      box-shadow: 0 18px 60px rgba(0,0,0,.55);
+      z-index:120;
+      font-size:13px;
+      max-width: min(620px, 92vw);
+    }
+    .toast.show{display:block}
+
+    /* Responsive */
+    @media (max-width: 980px){
+      .hero{grid-template-columns: 1fr; padding-top:26px}
+      .cards{grid-template-columns: 1fr}
+      .pricing{grid-template-columns: 1fr}
+      .faq{grid-template-columns: 1fr}
+      nav{display:none}
+    }
+  </style>
+</head>
+
+<body>
+  <header class="topbar">
+    <div class="inner">
+      <a class="brand" href="#top">
+        <div class="logo" aria-hidden="true"></div>
+        <div>
+          <div class="name">The Vault</div>
+          <div class="tag">Protected data, simplified.</div>
+        </div>
+      </a>
+
+      <nav aria-label="Primary">
+        <a href="#features">Features</a>
+        <a href="#security">Security</a>
+        <a href="#pricing">Pricing</a>
+        <a href="#faq">FAQ</a>
+      </nav>
+
+      <div class="actions">
+        <button class="btn" id="btnAccess" type="button" title="Access">
+          <span aria-hidden="true">⟡</span>
+          Access
+        </button>
+        <button class="btn primary" id="btnGet" type="button">
+          Get The Vault
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap" id="top">
+    <section class="hero">
+      <div class="heroCard">
+        <div class="content">
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+            <span class="pill">Zero-Trust Storage</span>
+            <span style="color:var(--muted2);font-size:13px">Encryption • Access Control • Audit Trails</span>
+          </div>
+
+          <h1>Keep sensitive data locked down — without slowing your team down.</h1>
+          <p class="sub">
+            The Vault is a modern data protection layer for files, credentials, and internal docs.
+            Encrypt at rest + in transit, enforce least-privilege access, and get instant audit trails.
+          </p>
+
+          <div class="heroCTAs">
+            <button class="btn primary" id="btnStart" type="button">Start free</button>
+            <button class="btn" type="button" id="btnDemo">Watch demo</button>
+            <a class="btn" href="#pricing">See pricing</a>
+          </div>
+
+          <div class="miniRow">
+            <span><i class="dot" aria-hidden="true"></i> SOC-style audit logs</span>
+            <span><i class="dot" aria-hidden="true"></i> Granular permissions</span>
+            <span><i class="dot" aria-hidden="true"></i> Instant revoke & rotate</span>
+          </div>
+        </div>
+      </div>
+
+      <aside class="viz" aria-label="Vault status preview">
+        <div class="grid" aria-hidden="true"></div>
+
+        <div class="vaultShell">
+          <div class="vaultTop">
+            <div class="label">
+              <span class="chip" aria-hidden="true"></span>
+              Vault Status
+            </div>
+            <span class="badge lock">Locked</span>
+          </div>
+
+          <div class="meter" aria-label="Protection meter">
+            <div></div>
+          </div>
+
+          <div class="kpis">
+            <div class="kpi">
+              <div class="t">Encrypted Objects</div>
+              <div class="v" id="kpiObjects">48,219 <small>items</small></div>
+            </div>
+            <div class="kpi">
+              <div class="t">Avg. Access Latency</div>
+              <div class="v" id="kpiLatency">42 <small>ms</small></div>
+            </div>
+            <div class="kpi">
+              <div class="t">Threat Blocks</div>
+              <div class="v" id="kpiBlocks">1,204 <small>this week</small></div>
+            </div>
+            <div class="kpi">
+              <div class="t">Compliance Mode</div>
+              <div class="v">On <small>retention + audit</small></div>
+            </div>
+          </div>
+
+          <div class="stream" aria-label="Recent activity">
+            <div class="line"><span>Policy: “Least Privilege” enforced</span><span class="badge ok">Active</span></div>
+            <div class="line"><span>Key rotation scheduled</span><span class="badge">24h</span></div>
+            <div class="line"><span>Unusual access attempt</span><span class="badge warn">Blocked</span></div>
+          </div>
+        </div>
+      </aside>
+    </section>
+
+    <section class="section" id="features">
+      <h2>Everything you need to protect data.</h2>
+      <p class="lead">
+        Built for teams that move fast: secure defaults, clean UX, and controls you can actually understand.
+      </p>
+
+      <div class="cards">
+        <div class="card">
+          <div class="icon" aria-hidden="true">🔒</div>
+          <h3>Zero-trust encryption</h3>
+          <p>End-to-end encryption with per-object keys, rotation policies, and secure sharing links.</p>
+        </div>
+        <div class="card">
+          <div class="icon" aria-hidden="true">🧭</div>
+          <h3>Least-privilege access</h3>
+          <p>Role-based rules, per-folder permissions, temporary access, and instant revocation.</p>
+        </div>
+        <div class="card">
+          <div class="icon" aria-hidden="true">🛰️</div>
+          <h3>Audit trails & alerts</h3>
+          <p>Human-readable logs, exportable reports, and anomaly detection for risky activity.</p>
+        </div>
+        <div class="card">
+          <div class="icon" aria-hidden="true">🧪</div>
+          <h3>Secure workflows</h3>
+          <p>Approval gates for sensitive changes and share controls that prevent copy-paste leakage.</p>
+        </div>
+        <div class="card">
+          <div class="icon" aria-hidden="true">🗝️</div>
+          <h3>Credential vaulting</h3>
+          <p>Store secrets, issue scoped tokens, and rotate without breaking your pipeline.</p>
+        </div>
+        <div class="card">
+          <div class="icon" aria-hidden="true">🧾</div>
+          <h3>Compliance-ready</h3>
+          <p>Retention rules, immutable logs, and export tools for audits and internal reviews.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="security">
+      <h2>Security that looks simple because it is.</h2>
+      <p class="lead">
+        The Vault ships with “secure by default” settings and optional advanced controls when you need them.
+      </p>
+
+      <div class="cards" style="grid-template-columns: 1.2fr .8fr .8fr;">
+        <div class="card" style="min-height:auto">
+          <div class="icon" aria-hidden="true">🛡️</div>
+          <h3>Policy engine</h3>
+          <p>
+            Define who can access what, from where, and for how long. Apply rules to teams, roles,
+            folders, or individual assets. Deny-by-default with explicit grants.
+          </p>
+        </div>
+        <div class="card" style="min-height:auto">
+          <div class="icon" aria-hidden="true">🧷</div>
+          <h3>Share controls</h3>
+          <p>Expiring links, view-only mode, watermarking, download blocks, and single-use access.</p>
+        </div>
+        <div class="card" style="min-height:auto">
+          <div class="icon" aria-hidden="true">🧠</div>
+          <h3>Anomaly alerts</h3>
+          <p>Flag unusual access patterns and lock down automatically when risk spikes.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="pricing">
+      <h2>Pricing that scales with you.</h2>
+      <p class="lead">
+        Start small, then unlock deeper controls as your team grows. Cancel anytime.
+      </p>
+
+      <div class="pricing">
+        <div class="priceCard">
+          <div class="top">
+            <div>
+              <div class="plan">Starter</div>
+              <div class="desc">For solo builders and small projects.</div>
+            </div>
+            <span class="badge">Basic</span>
+          </div>
+          <div class="price">$19 <small>/mo</small></div>
+          <button class="btn" style="width:100%" data-plan="Starter">Choose Starter</button>
+          <ul class="clean">
+            <li><span class="check"></span>Encrypted storage</li>
+            <li><span class="check"></span>Share links w/ expiry</li>
+            <li><span class="check"></span>Activity history</li>
+          </ul>
+        </div>
+
+        <div class="priceCard featured">
+          <div class="top">
+            <div>
+              <div class="plan">Team</div>
+              <div class="desc">For teams that need access controls.</div>
+            </div>
+            <span class="badge lock">Most popular</span>
+          </div>
+          <div class="price">$69 <small>/mo</small></div>
+          <button class="btn primary" style="width:100%" data-plan="Team">Choose Team</button>
+          <ul class="clean">
+            <li><span class="check"></span>Roles + granular permissions</li>
+            <li><span class="check"></span>Key rotation policies</li>
+            <li><span class="check"></span>Alerts + exports</li>
+          </ul>
+        </div>
+
+        <div class="priceCard">
+          <div class="top">
+            <div>
+              <div class="plan">Enterprise</div>
+              <div class="desc">For compliance and advanced security.</div>
+            </div>
+            <span class="badge">Custom</span>
+          </div>
+          <div class="price">$— <small>/mo</small></div>
+          <button class="btn" style="width:100%" data-plan="Enterprise">Talk to sales</button>
+          <ul class="clean">
+            <li><span class="check"></span>Immutable audit logs</li>
+            <li><span class="check"></span>Retention + legal hold</li>
+            <li><span class="check"></span>SSO + device policies</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="faq">
+      <h2>FAQ</h2>
+      <p class="lead">Quick answers. We’ll make the hidden side later.</p>
+
+      <div class="faq">
+        <div class="qa">
+          <div class="q" role="button" tabindex="0" aria-expanded="false">
+            <span>Is The Vault a password manager?</span>
+            <div class="caret" aria-hidden="true">▾</div>
+          </div>
+          <div class="a">
+            It can store secrets, but it’s broader: it protects files, credentials, and internal docs with
+            policy controls, audit trails, and secure sharing.
+          </div>
+        </div>
+
+        <div class="qa">
+          <div class="q" role="button" tabindex="0" aria-expanded="false">
+            <span>How does access control work?</span>
+            <div class="caret" aria-hidden="true">▾</div>
+          </div>
+          <div class="a">
+            You grant permissions at the team/role/folder level (or per asset). Access can be temporary,
+            revocable, and restricted by device/location in advanced tiers.
+          </div>
+        </div>
+
+        <div class="qa">
+          <div class="q" role="button" tabindex="0" aria-expanded="false">
+            <span>Do you log everything?</span>
+            <div class="caret" aria-hidden="true">▾</div>
+          </div>
+          <div class="a">
+            Yes — key events like access, shares, policy changes, and failed attempts. Logs are readable
+            and exportable for audits.
+          </div>
+        </div>
+
+        <div class="qa">
+          <div class="q" role="button" tabindex="0" aria-expanded="false">
+            <span>What’s “the hidden site” idea?</span>
+            <div class="caret" aria-hidden="true">▾</div>
+          </div>
+          <div class="a">
+            This page is your public “cover.” The “Access” flow can later route to a separate private
+            area (different path/subdomain) once you’re ready.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      <div>© <span id="year"></span> The Vault. All rights reserved.</div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <a class="btn" href="#top">Back to top</a>
+        <button class="btn" id="btnStatus" type="button">Run security check</button>
+      </div>
+    </footer>
+  </main>
+
+  <!-- Access Modal -->
+  <div class="backdrop" id="backdrop" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px">
+        <div>
+          <h3 id="modalTitle">Access</h3>
+          <p>Enter your access phrase to continue.</p>
+        </div>
+        <button class="btn" id="btnClose" type="button" aria-label="Close">✕</button>
+      </div>
+
+      <div class="field">
+        <span aria-hidden="true">🔑</span>
+        <input id="accessInput" type="password" autocomplete="off" placeholder="Access phrase" />
+        <button class="btn primary" id="btnEnter" type="button">Enter</button>
+      </div>
+
+      <div class="hint">Tip: press Enter.</div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    // Utilities
+    const $ = (sel, root=document) => root.querySelector(sel);
+    const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
+
+    const toast = (msg) => {
+      const el = $("#toast");
+      el.textContent = msg;
+      el.classList.add("show");
+      clearTimeout(toast._t);
+      toast._t = setTimeout(() => el.classList.remove("show"), 2600);
+    };
+
+    // Footer year
+    $("#year").textContent = new Date().getFullYear();
+
+    // FAQ accordion
+    $$(".qa").forEach((card) => {
+      const q = $(".q", card);
+      const toggle = () => {
+        const open = card.classList.toggle("open");
+        q.setAttribute("aria-expanded", open ? "true" : "false");
+      };
+      q.addEventListener("click", toggle);
+      q.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggle(); }
+      });
+    });
+
+    // Modal logic
+    const backdrop = $("#backdrop");
+    const openModal = () => {
+      backdrop.classList.add("show");
+      backdrop.setAttribute("aria-hidden", "false");
+      setTimeout(() => $("#accessInput").focus(), 0);
+    };
+    const closeModal = () => {
+      backdrop.classList.remove("show");
+      backdrop.setAttribute("aria-hidden", "true");
+      $("#accessInput").value = "";
+    };
+
+    $("#btnAccess").addEventListener("click", openModal);
+    $("#btnClose").addEventListener("click", closeModal);
+    backdrop.addEventListener("click", (e) => { if (e.target === backdrop) closeModal(); });
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && backdrop.classList.contains("show")) closeModal();
+    });
+
+    const openAboutBlankWithTest = () => {
+      const w = window.open("about:blank", "_blank");
+      if (!w) {
+        toast("Popup blocked — allow popups for this site.");
+        return;
+      }
+
+      const injected = `<!doctype html>
+    <html lang="en">
+    <head>
+      <meta charset="utf-8" />
+      <meta name="viewport" content="width=device-width,initial-scale=1" />
+      <title>The Vault</title>
+      <style>
+        :root{--bg:#07070a;--card:#0f1020;--line:rgba(255,255,255,.12);--text:rgba(255,255,255,.88);--muted:rgba(255,255,255,.62);--p:#b06cff;}
+        *{box-sizing:border-box}
+        body{
+          margin:0;
+          font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+          background: radial-gradient(900px 600px at 75% 0%, rgba(176,108,255,.20), transparent 60%), var(--bg);
+          color:var(--text);
+        }
+        .wrap{max-width:900px;margin:0 auto;padding:28px}
+        .card{
+          border:1px solid var(--line);
+          background: rgba(255,255,255,.03);
+          border-radius: 20px;
+          padding: 18px;
+        }
+        .row{display:flex;gap:12px;flex-wrap:wrap;align-items:center;justify-content:space-between}
+        .btn{
+          border:1px solid var(--line);
+          background: linear-gradient(135deg, rgba(176,108,255,.95), rgba(124,77,255,.75));
+          color:#fff;
+          padding:10px 12px;
+          border-radius:14px;
+          cursor:pointer;
+        }
+        .btn:hover{filter:brightness(1.06)}
+        code{
+          display:block;
+          padding:12px;
+          border-radius:14px;
+          background: rgba(0,0,0,.25);
+          border:1px solid rgba(255,255,255,.10);
+          color: rgba(255,255,255,.80);
+          overflow:auto;
+        }
+        .muted{color:var(--muted); line-height:1.6}
+      </style>
+    </head>
+    <body>
+      <div class="wrap">
+        <div class="row">
+          <div>
+            <h1 style="margin:0 0 6px;">The Vault</h1>
+            <div class="muted">Test page loaded inside about:blank.</div>
+          </div>
+          <button class="btn" id="ping">Ping</button>
+        </div>
+
+        <div style="height:14px"></div>
+
+        <div class="card">
+          <div class="muted" style="margin-bottom:10px;">Environment check:</div>
+          <code id="env"></code>
+        </div>
+      </div>
+
+      <script>
+        const env = document.getElementById("env");
+        env.textContent =
+          "location.href: " + location.href + "\\n" +
+          "document.domain: " + document.domain + "\\n" +
+          "userAgent: " + navigator.userAgent;
+
+        document.getElementById("ping").addEventListener("click", () => {
+          alert("Hello from The Vault tab.");
+        });
+      <\/script>
+    </body>
+    </html>`;
+
+      w.document.open();
+      w.document.write(injected);
+      w.document.close();
+    };
+    async function openAboutBlankWithFile(pathToHtmlFile, adminMode = false) {
+      const w = window.open("about:blank", "_blank");
+      if (!w) {
+        toast("Popup blocked — allow popups for this site.");
+        return null;
+      }
+
+      // ✅ Set the flag on the new window (NO HTML string replacement)
+      w.__ADMIN_MODE__ = !!adminMode;
+
+      // quick loading screen
+      w.document.open();
+      w.document.write(`<!doctype html><title>Loading…</title>
+        <style>
+          body{margin:0;display:grid;place-items:center;height:100vh;font-family:system-ui;background:#07070a;color:#fff}
+          .box{border:1px solid rgba(255,255,255,.12);padding:16px 18px;border-radius:14px;background:rgba(255,255,255,.03)}
+        </style>
+        <div class="box">Loading…</div>
+      `);
+      w.document.close();
+
+      const res = await fetch(pathToHtmlFile, { cache: "no-store" });
+      const html = await res.text();
+
+      w.document.open();
+      w.document.write(html);
+      w.document.close();
+
+      return w;
+    }
+
+
+    const enterAccess = async () => {
+      const v = $("#accessInput").value.trim();
+      if (!v) return toast("Enter an access phrase.");
+
+      if (v === "free") {
+        closeModal();
+        await openAboutBlankWithFile("/vault.html", false);
+        return;
+      }
+
+      if (v === "eric") {
+        closeModal();
+        await openAboutBlankWithFile("/vault.html", true);
+        return;
+      }
+
+      toast("Access denied.");
+    };
+
+
+    $("#btnEnter").addEventListener("click", enterAccess);
+    $("#accessInput").addEventListener("keydown", (e) => { if (e.key === "Enter") enterAccess(); });
+
+    // Pricing buttons
+    $$("[data-plan]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        toast(`Selected: ${btn.dataset.plan}. Next step: checkout flow.`);
+      });
+    });
+
+    // Top CTA buttons
+    $("#btnStart").addEventListener("click", () => toast("Starting free… (connect signup later)"));
+    $("#btnGet").addEventListener("click", () => {
+      document.location.hash = "#pricing";
+      toast("Pick a plan to continue.");
+    });
+    $("#btnDemo").addEventListener("click", () => toast("Demo video placeholder. (Add a modal or embed.)"));
+
+    // “Security check” fun
+    $("#btnStatus").addEventListener("click", () => {
+      const objects = $("#kpiObjects");
+      const latency = $("#kpiLatency");
+      const blocks = $("#kpiBlocks");
+
+      const n = Math.floor(42000 + Math.random() * 18000);
+      const ms = Math.floor(28 + Math.random() * 40);
+      const b = Math.floor(700 + Math.random() * 1200);
+
+      objects.textContent = n.toLocaleString() + " items";
+      latency.textContent = ms + " ms";
+      blocks.textContent = b.toLocaleString() + " this week";
+
+      toast("Security check complete: all systems locked.");
+    });
+  </script>
+</body>
+</html>
