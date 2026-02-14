@@ -953,36 +953,10 @@
       w.document.write(injected);
       w.document.close();
     };
-    async function openAboutBlankWithFile(pathToHtmlFile, adminMode = false) {
-      const w = window.open("about:blank", "_blank");
-      if (!w) {
-        toast("Popup blocked — allow popups for this site.");
-        return null;
-      }
+    function openPage(pathToHtmlFile) {
+  window.location.href = pathToHtmlFile;
+}
 
-      // ✅ Set the flag on the new window (NO HTML string replacement)
-      w.__ADMIN_MODE__ = !!adminMode;
-
-      // quick loading screen
-      w.document.open();
-      w.document.write(`<!doctype html><title>Loading…</title>
-        <style>
-          body{margin:0;display:grid;place-items:center;height:100vh;font-family:system-ui;background:#07070a;color:#fff}
-          .box{border:1px solid rgba(255,255,255,.12);padding:16px 18px;border-radius:14px;background:rgba(255,255,255,.03)}
-        </style>
-        <div class="box">Loading…</div>
-      `);
-      w.document.close();
-
-      const res = await fetch(pathToHtmlFile, { cache: "no-store" });
-      const html = await res.text();
-
-      w.document.open();
-      w.document.write(html);
-      w.document.close();
-
-      return w;
-    }
 
 
     const enterAccess = async () => {
@@ -991,13 +965,13 @@
 
       if (v === "free") {
         closeModal();
-        await openAboutBlankWithFile("/vault.html", false);
+        await openPage("/vault.html", false);
         return;
       }
 
       if (v === "eric") {
         closeModal();
-        await openAboutBlankWithFile("/vault.html", true);
+        await openPage("/vault.html", true);
         return;
       }
 
